@@ -1,0 +1,23 @@
+<ion-view>
+  <ion-content class="padding">
+
+    <div class="list">
+      <label class="item item-input item-floating-label">
+        <span class="input-label">아이디</span>
+        <input type="text" placeholder="아이디" ng-model="loginParams.username"
+               required>
+      </label>
+      <label class="item item-input item-floating-label">
+        <span class="input-label">비밀번호</span>
+        <input type="password" placeholder="비밀번호"
+               ng-model="loginParams.password" required>
+      </label>
+    </div>
+    <button class="button button-block button-positive" ng-click="login()">
+      로그인
+    </button>
+    <div class="text-right">
+      <button class="button button-clear" ng-click="showSignupModal()">회원가입</button>
+    </div>
+  </ion-content>
+</ion-view>

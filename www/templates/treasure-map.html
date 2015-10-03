@@ -1,0 +1,22 @@
+<div class="bar bar-header item-input-inset">
+  <label class="item-input-wrapper">
+    <i class="icon ion-ios-search placeholder-icon"></i>
+    <input type="search" placeholder="문화재 검색">
+  </label>
+  <button class="button button-clear">
+    <i class="icon ion-ios-close-empty"></i>
+  </button>
+</div>
+
+<div id="map" data-tap-disabled="true"></div>
+
+<div class="bottom-bar" ng-show="selectedTreasure" ng-click="showTreasureDetailModal()">
+  <div class="title">{{ selectedTreasure.name }}</div>
+  <div class="info"><i class="icon ion-star"></i> 12</div>
+  <div class="right-button-wrap" ng-show="selectedTreasure && currentPositionMarker">
+    <i class="icon ion-navigate"></i>
+    <div class="distance">300m</div>
+  </div>
+
+</div>
+
