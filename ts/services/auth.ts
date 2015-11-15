@@ -1,4 +1,4 @@
-app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', function ($rootScope, $state, $ionicPopup, api, storage, db) {
+app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', 'modal', function ($rootScope, $state, $ionicPopup, api, storage, db, modal) {
   var self = this;
   $rootScope.user = storage.get('user', null);
 
@@ -38,11 +38,14 @@ app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'd
       if (res) {
         self.setUser(null);
         api.setAuthToken(null);
-        $state.go('login');
         db.deleteAll();
       }
     });
   };
 
   $rootScope.logout = this.logout;
+
+  $rootScope.showLoginModal = function() {
+    modal.show('login', 'templates/login.html', $rootScope);
+  }
 }]);

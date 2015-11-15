@@ -9,7 +9,8 @@
         <div class="item">
           <div class="row">
             <div class="col">
-              <div class="user-info-item" ng-click="openExploredTreasuresModal()">
+              <div class="user-info-item"
+                   ng-click="openExploredTreasuresModal()">
                 <icon height="28" padding="4"
                       src="img/icon/ic_found_o.png"></icon>
                 {{ $root.user.totalExplored }}
@@ -93,17 +94,25 @@
                      ng-show="lock['/treasures/' + selectedTreasure.id] && !selectedTreasure.type"></ion-spinner>
         <span
           class="treasure-type">{{ selectedTreasure.type }}</span>
-        &nbsp;&nbsp;<icon height="18" src="img/icon/ic_found_o.png"></icon>
+        &nbsp;&nbsp;
+        <icon height="18" src="img/icon/ic_found_o.png"></icon>
         {{ selectedTreasure.totalExplored }}
-        &nbsp;&nbsp;<icon height="18" src="img/icon/ic_heart_blue.png"></icon>
+        &nbsp;&nbsp;
+        <icon height="18" src="img/icon/ic_heart_blue.png"></icon>
         {{ selectedTreasure.totalLiked }}
       </div>
       <div class="right-button-wrap"
            ng-show="selectedTreasure && currentPositionMarker">
-        <i class="direction-indicator icon ion-navigate"
-           style="transition: transform .3s linear; transform: rotate({{ -45 + angleToSelectedTreasure }}deg);"></i>
+        <div
+          ng-hide="selectedTreasure.explored || (exploringTreasure && (exploringTreasure.id === selectedTreasure.id))">
+          <button ng-click="startExplore(); $event.stopPropagation()">찾아가기</button>
+        </div>
+        <div ng-show="selectedTreasure.explored || (exploringTreasure && (exploringTreasure.id === selectedTreasure.id))">
+          <i class="direction-indicator icon ion-navigate"
+             style="transition: transform .3s linear; transform: rotate({{ -45 + angleToSelectedTreasure }}deg);"></i>
 
-        <div class="distance">{{ distanceToSelectedTreasure }}</div>
+          <div class="distance">{{ distanceToSelectedTreasure }}</div>
+        </div>
       </div>
 
     </div>
@@ -116,7 +125,7 @@
     <snackbar
       ng-class="{ show: !searchMode && currentZoomLevel < MIN_ZOOM_LEVEL_FOR_MARKER }"
       message="'지도를 확대해주세요'"
-      ></snackbar>
+    ></snackbar>
 
   </ion-side-menu-content>
 </ion-side-menus>

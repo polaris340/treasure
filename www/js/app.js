@@ -2,7 +2,7 @@ var CONSTANTS = {
     API_URL: 'http://54.64.176.231:8080'
 };
 var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
-    .run(function ($ionicPlatform, $rootScope, $state, auth, db) {
+    .run(function ($ionicPlatform, $rootScope, $state, auth, db, modal) {
     $ionicPlatform.ready(function () {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
         // for form inputs)
@@ -20,18 +20,22 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         catch (e) {
         }
     });
-    // 로그인 필요한 페이지인 경우 리다이렉트
-    $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
-        if (!auth.isLogin() && toState.loginRequired) {
-            event.preventDefault();
-            $state.go('login');
-        }
-    });
+    $rootScope.showGuideModal = function () {
+        modal.show('guide', 'templates/guide.html');
+    };
+    $rootScope.hideModal = function (name) {
+        modal.hide(name);
+    };
 })
     .config(function ($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
     $stateProvider
+        .state('guide', {
+        url: '/guide',
+        controller: 'GuideController',
+        templateUrl: 'templates/guide.html'
+    })
         .state('map', {
-        url: '/',
+        url: '/map',
         controller: 'MapController',
         templateUrl: 'templates/treasure-map.html',
         loginRequired: true
@@ -41,7 +45,7 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         controller: 'LoginController',
         templateUrl: 'templates/login.html'
     });
-    $urlRouterProvider.otherwise('/');
+    $urlRouterProvider.otherwise('/map');
     if (!ionic.Platform.isIOS()) {
         $ionicConfigProvider.scrolling.jsScrolling(false);
     }
@@ -211,7 +215,10 @@ app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$
         };
         $scope.explore();
     }]);
-app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', 'modal', '$state', 'api', 'auth', function ($scope, $ionicLoading, $ionicHistory, modal, $state, api, auth) {
+app.controller('GuideController', ['$scope', '$state', '$ionicHistory', 'storage', function ($scope, $state, $ionicHistory, storage) {
+        // storage.set('firstLaunch', false);
+    }]);
+app.controller('LoginController', ['$scope', '$rootScope', '$ionicLoading', '$ionicHistory', 'modal', '$state', 'api', 'auth', function ($scope, $rootScope, $ionicLoading, $ionicHistory, modal, $state, api, auth) {
         $ionicHistory.clearHistory();
         $scope.loginParams = {
             username: "",
@@ -226,10 +233,14 @@ app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', '
             $ionicLoading.show();
             api.request(options, function (res, status) {
                 api.setAuthToken(res.token);
-                $state.go('map');
+                $scope.hideLoginModal();
+                $rootScope.$broadcast('login.success');
             }, null, function (res, status) {
                 $ionicLoading.hide();
             });
+        };
+        $scope.hideLoginModal = function () {
+            modal.hide('login');
         };
         $scope.showSignupModal = function () {
             modal.show('signup', 'templates/modals/signup.html', $scope);
@@ -302,13 +313,33 @@ var Treasure = (function () {
     return Treasure;
 })();
 /// <reference path="../models/Treasure.ts" />
-app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', function ($scope, $ionicHistory, $q, $timeout, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth) {
+app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth) {
+        if (storage.get('firstLaunch') !== false) {
+            $rootScope.showGuideModal();
+        }
         $scope.MIN_ZOOM_LEVEL_FOR_MARKER = 12;
         $ionicHistory.clearHistory();
         $scope.currentPositionMarker = null;
         $scope.distanceToSelectedTreasure = '';
         $scope.angleToSelectedTreasure = 0;
         $scope.currentZoomLevel = 16;
+        $scope.exploringTreasure = null;
+        var lineSymbol = {
+            path: 'M 0,-1 0,1',
+            strokeOpacity: 1,
+            scale: 4
+        };
+        $scope.lineToTarget = new google.maps.Polyline({
+            path: [{ lat: 36, lng: 127 }, { lat: 36, lng: 127 }],
+            geodesic: true,
+            strokeColor: '#D83F2A',
+            strokeOpacity: 0,
+            icons: [{
+                    icon: lineSymbol,
+                    offset: '0',
+                    repeat: '20px'
+                }]
+        });
         auth.requestUserData();
         var myLatlng = new google.maps.LatLng(37.5775345, 126.9765463);
         var mapOptions = {
@@ -328,6 +359,7 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
             }
             $scope.currentPositionMarker.setPosition(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
             $scope.calculateDistance();
+            $scope.refreshPath();
             $scope.$digest();
         });
         $scope.map = map;
@@ -432,6 +464,26 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
                 });
             }
         };
+        $scope.refreshPath = function () {
+            // redraw line to target
+            if (!$scope.exploringTreasure || !$scope.currentPositionMarker) {
+                $scope.lineToTarget.setMap(null);
+                return;
+            }
+            if ($scope.exploringTreasure.explored) {
+                $scope.lineToTarget.setMap(null);
+                return;
+            }
+            $scope.lineToTarget.setMap($scope.map);
+            var path = [{
+                    lat: $scope.exploringTreasure.latitude,
+                    lng: $scope.exploringTreasure.longitude
+                }, {
+                    lat: $scope.currentPositionMarker.getPosition().lat(),
+                    lng: $scope.currentPositionMarker.getPosition().lng()
+                }];
+            $scope.lineToTarget.setPath(path);
+        };
         $scope.selectTreasure = function (treasure) {
             if ($scope.selectedTreasure) {
                 $scope.selectedTreasure.setMarkerIcon(false);
@@ -458,7 +510,12 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
             //$scope.infoWindow.setContent(treasure.name);
             //$scope.infoWindow.open($scope.map, treasure.marker);
             $scope.calculateDistance();
-            $scope.$digest();
+            $scope.refreshPath();
+            try {
+                $scope.$digest();
+            }
+            catch (e) {
+            }
         };
         // orientation sensor
         document.addEventListener("deviceready", function () {
@@ -627,30 +684,40 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
         $scope.toggleLeft = function () {
             $ionicSideMenuDelegate.toggleLeft();
         };
-        $scope.openExploredTreasuresModal = function () {
+        $scope.openLikedTreasuresModal = function () {
             $ionicLoading.show();
             api.request({
                 url: '/treasures/liked',
                 method: 'get'
             }, function (res) {
                 $ionicLoading.hide();
+                var treasures = res.treasures.map(function (item) {
+                    return new Treasure(item);
+                });
                 modal.show('liked', '/templates/modals/treasure-list.html', $scope, {
-                    treasures: res.treasures,
+                    treasures: treasures,
                     title: '찜한 보물'
                 });
             }, function (res) {
                 $ionicLoading.hide();
             });
         };
-        $scope.openLikedTreasuresModal = function () {
+        $scope.startExplore = function () {
+            $scope.exploringTreasure = $scope.selectedTreasure;
+            $scope.refreshPath();
+        };
+        $scope.openExploredTreasuresModal = function () {
             $ionicLoading.show();
             api.request({
                 url: '/treasures/explored',
                 method: 'get'
             }, function (res) {
                 $ionicLoading.hide();
+                var treasures = res.treasures.map(function (item) {
+                    return new Treasure(item);
+                });
                 modal.show('explored', '/templates/modals/treasure-list.html', $scope, {
-                    treasures: res.treasures,
+                    treasures: treasures,
                     title: '찾은 보물'
                 });
             }, function (res) {
@@ -873,7 +940,7 @@ app.directive('snackbar', function () {
         template: snackbarTemplate
     };
 });
-app.service('api', ['$http', '$rootScope', '$state', '$q', 'ionicToast', 'storage', 'modal', function ($http, $rootScope, $state, $q, ionicToast, storage, modal) {
+app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', function ($http, $rootScope, $state, $q, message, storage, modal) {
         var self = this;
         this._authToken = storage.get('authToken', null);
         if (this._authToken) {
@@ -933,15 +1000,15 @@ app.service('api', ['$http', '$rootScope', '$state', '$q', 'ionicToast', 'storag
         };
         this.defaultErrorHandler = function (res, status) {
             var errorMessage = res.detail || '오류가 발생했습니다 잠시 후에 다시 시도해주세요';
-            ionicToast.show(errorMessage, 'top', false, 1500);
+            message.show(errorMessage);
             if (status === 401) {
+                message.show('로그인이 필요합니다');
                 self.setAuthToken(null);
-                modal.hideAll();
-                $state.go('login');
+                $rootScope.showLoginModal();
             }
         };
     }]);
-app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', function ($rootScope, $state, $ionicPopup, api, storage, db) {
+app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', 'modal', function ($rootScope, $state, $ionicPopup, api, storage, db, modal) {
         var self = this;
         $rootScope.user = storage.get('user', null);
         this.setUser = function (user) {
@@ -977,12 +1044,14 @@ app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'd
                 if (res) {
                     self.setUser(null);
                     api.setAuthToken(null);
-                    $state.go('login');
                     db.deleteAll();
                 }
             });
         };
         $rootScope.logout = this.logout;
+        $rootScope.showLoginModal = function () {
+            modal.show('login', 'templates/login.html', $rootScope);
+        };
     }]);
 app.service('camera', ['$q', function ($q) {
         this.getPicture = function (options) {

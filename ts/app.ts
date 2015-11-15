@@ -4,7 +4,7 @@ var CONSTANTS = {
 
 var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
 
-  .run(function ($ionicPlatform, $rootScope, $state, auth, db) {
+  .run(function ($ionicPlatform, $rootScope, $state, auth, db, modal) {
     $ionicPlatform.ready(function () {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
       // for form inputs)
@@ -25,20 +25,23 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
       }
     });
 
+    $rootScope.showGuideModal = function() {
+      modal.show('guide', 'templates/guide.html');
+    };
 
-    // 로그인 필요한 페이지인 경우 리다이렉트
-    $rootScope.$on('$stateChangeStart', function (event, toState, toParams, fromState, fromParams) {
-      if (!auth.isLogin() && toState.loginRequired) {
-        event.preventDefault();
-        $state.go('login');
-      }
-    });
+    $rootScope.hideModal = function(name) {
+      modal.hide(name);
+    };
   })
   .config(function ($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
     $stateProvider
-
+      .state('guide', {
+        url: '/guide',
+        controller: 'GuideController',
+        templateUrl: 'templates/guide.html'
+      })
       .state('map', {
-        url: '/',
+        url: '/map',
         controller: 'MapController',
         templateUrl: 'templates/treasure-map.html',
         loginRequired: true
@@ -49,7 +52,7 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         templateUrl: 'templates/login.html'
       });
 
-    $urlRouterProvider.otherwise('/');
+    $urlRouterProvider.otherwise('/map');
 
     if (!ionic.Platform.isIOS()) {
       $ionicConfigProvider.scrolling.jsScrolling(false);

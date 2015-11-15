@@ -1,12 +1,35 @@
 /// <reference path="../models/Treasure.ts" />
 
-app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', function ($scope, $ionicHistory, $q, $timeout, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth) {
+app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth) {
+  if (storage.get('firstLaunch') !== false) {
+    $rootScope.showGuideModal();
+  }
+
   $scope.MIN_ZOOM_LEVEL_FOR_MARKER = 12;
   $ionicHistory.clearHistory();
   $scope.currentPositionMarker = null;
   $scope.distanceToSelectedTreasure = '';
   $scope.angleToSelectedTreasure = 0;
   $scope.currentZoomLevel = 16;
+  $scope.exploringTreasure = null;
+
+  var lineSymbol = {
+    path: 'M 0,-1 0,1',
+    strokeOpacity: 1,
+    scale: 4
+  };
+  $scope.lineToTarget = new google.maps.Polyline({
+    path: [{lat: 36, lng: 127}, {lat: 36, lng: 127}],
+    geodesic: true,
+    strokeColor: '#D83F2A',
+    strokeOpacity: 0,
+    icons: [{
+      icon: lineSymbol,
+      offset: '0',
+      repeat: '20px'
+    }]
+  });
+
 
   auth.requestUserData();
 
@@ -21,7 +44,6 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
   };
   var map = new google.maps.Map(document.getElementById("map"), mapOptions);
 
-
   navigator.geolocation.watchPosition(function (pos) {
     if ($scope.currentPositionMarker == null) {
       map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
@@ -33,6 +55,9 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
     }
     $scope.currentPositionMarker.setPosition(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
     $scope.calculateDistance();
+    $scope.refreshPath();
+
+
     $scope.$digest();
   });
 
@@ -159,6 +184,31 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
     }
   };
 
+  $scope.refreshPath = function () {
+    // redraw line to target
+
+    if (!$scope.exploringTreasure || !$scope.currentPositionMarker) {
+      $scope.lineToTarget.setMap(null);
+      return;
+    }
+
+    if ($scope.exploringTreasure.explored) {
+      $scope.lineToTarget.setMap(null);
+      return;
+    }
+    $scope.lineToTarget.setMap($scope.map);
+
+    var path = [{
+      lat: $scope.exploringTreasure.latitude,
+      lng: $scope.exploringTreasure.longitude
+    }, {
+      lat: $scope.currentPositionMarker.getPosition().lat(),
+      lng: $scope.currentPositionMarker.getPosition().lng()
+    }];
+
+    $scope.lineToTarget.setPath(path);
+  };
+
   $scope.selectTreasure = function (treasure) {
     if ($scope.selectedTreasure) {
       $scope.selectedTreasure.setMarkerIcon(false);
@@ -191,7 +241,11 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
     //$scope.infoWindow.open($scope.map, treasure.marker);
 
     $scope.calculateDistance();
-    $scope.$digest();
+    $scope.refreshPath();
+    try {
+      $scope.$digest();
+    } catch (e) {
+    }
   };
 
 
@@ -387,34 +441,45 @@ app.controller('MapController', ['$scope', '$ionicHistory', '$q', '$timeout', '$
     $ionicSideMenuDelegate.toggleLeft();
   };
 
-  $scope.openExploredTreasuresModal = function() {
+  $scope.openLikedTreasuresModal = function () {
     $ionicLoading.show();
     api.request({
       url: '/treasures/liked',
       method: 'get'
-    }, function(res) {
+    }, function (res) {
       $ionicLoading.hide();
+      var treasures = res.treasures.map(function (item) {
+        return new Treasure(item);
+      });
       modal.show('liked', '/templates/modals/treasure-list.html', $scope, {
-        treasures: res.treasures,
+        treasures: treasures,
         title: '찜한 보물'
       });
-    }, function(res) {
+    }, function (res) {
       $ionicLoading.hide();
     });
   };
 
-  $scope.openLikedTreasuresModal = function() {
+  $scope.startExplore = function() {
+    $scope.exploringTreasure = $scope.selectedTreasure;
+    $scope.refreshPath();
+  };
+
+  $scope.openExploredTreasuresModal = function () {
     $ionicLoading.show();
     api.request({
       url: '/treasures/explored',
       method: 'get'
-    }, function(res) {
+    }, function (res) {
       $ionicLoading.hide();
+      var treasures = res.treasures.map(function (item) {
+        return new Treasure(item);
+      });
       modal.show('explored', '/templates/modals/treasure-list.html', $scope, {
-        treasures: res.treasures,
+        treasures: treasures,
         title: '찾은 보물'
       });
-    }, function(res) {
+    }, function (res) {
       $ionicLoading.hide();
     });
   };

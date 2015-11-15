@@ -1,4 +1,4 @@
-app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', 'modal', '$state', 'api', 'auth', function ($scope, $ionicLoading, $ionicHistory, modal, $state, api, auth) {
+app.controller('LoginController', ['$scope', '$rootScope', '$ionicLoading', '$ionicHistory', 'modal', '$state', 'api', 'auth', function ($scope, $rootScope, $ionicLoading, $ionicHistory, modal, $state, api, auth) {
   $ionicHistory.clearHistory();
 
   $scope.loginParams = {
@@ -15,7 +15,8 @@ app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', '
     $ionicLoading.show();
     api.request(options, function (res, status) {
         api.setAuthToken(res.token);
-        $state.go('map');
+        $scope.hideLoginModal();
+        $rootScope.$broadcast('login.success');
       },
       null,
       function (res, status) {
@@ -23,7 +24,11 @@ app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', '
       });
   };
 
-  $scope.showSignupModal = function() {
+  $scope.hideLoginModal = function () {
+    modal.hide('login');
+  };
+
+  $scope.showSignupModal = function () {
     modal.show('signup', 'templates/modals/signup.html', $scope);
   };
 }]);

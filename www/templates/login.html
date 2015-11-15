@@ -1,6 +1,10 @@
-<ion-view class="login-view">
+<ion-modal-view class="login-view" ng-controller="LoginController">
   <div class="content-wrap">
     <h1>문화유산 보물찾기</h1>
+
+    <button class="button button-clear btn-close-modal" ng-click="hideLoginModal()">
+      <i class="icon ion-ios-close-empty"></i>
+    </button>
 
     <form class="login-form" ng-submit="login()">
 
@@ -21,4 +25,4 @@
   </button>
 
 
-</ion-view>
+</ion-modal-view>

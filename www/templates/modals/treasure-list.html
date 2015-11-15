@@ -7,7 +7,8 @@
   </ion-header-bar>
   <ion-content class="has-footer">
     <div class="list">
-      <div class="item" ng-repeat="treasure in treasures">
+      <div class="item" ng-repeat="treasure in treasures"
+           ng-click="$parent.selectTreasure(treasure); $parent.showTreasureDetailModal();">
         <h2>{{ treasure.name }}</h2>
 
         <p class="info">

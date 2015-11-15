@@ -1,4 +1,4 @@
-app.service('api', ['$http', '$rootScope', '$state', '$q', 'ionicToast', 'storage', 'modal', function ($http, $rootScope, $state, $q, ionicToast, storage, modal) {
+app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', function ($http, $rootScope, $state, $q, message, storage, modal) {
   var self = this;
   this._authToken = storage.get('authToken', null);
   if (this._authToken) {
@@ -68,11 +68,11 @@ app.service('api', ['$http', '$rootScope', '$state', '$q', 'ionicToast', 'storag
 
   this.defaultErrorHandler = function (res, status) {
     var errorMessage = res.detail || '오류가 발생했습니다 잠시 후에 다시 시도해주세요';
-    ionicToast.show(errorMessage, 'top', false, 1500);
+    message.show(errorMessage);
     if (status === 401) {
+      message.show('로그인이 필요합니다');
       self.setAuthToken(null);
-      modal.hideAll();
-      $state.go('login');
+      $rootScope.showLoginModal();
     }
   };
 }]);
