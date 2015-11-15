@@ -1,3 +1,89 @@
+@import "vars/_colors.scss";
+
 #map {
   height: 100%;
+}
+
+.btn-my-location {
+  position: fixed;
+  left: 8px;
+  top: 56px;
+  background-color: #fafafa;
+  width: 36px;
+  line-height: 36px;
+  text-align: center;
+  font-size: 18px;
+  color: $darkgray;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.platform-ios {
+  .btn-my-location {
+    top: 72px;
+  }
+
+  .bar-header.has-icon {
+    padding-top: 24px;
+  }
+}
+
+@font-face {
+  font-family: "jua";
+  src: url('../fonts/jua.otf');
+}
+
+.pull-right {
+  float: right;
+}
+
+.flex {
+  flex: 1;
+}
+
+.item.item-divider {
+  &.positive {
+    background-color: $positive;
+    color: white;
+  }
+}
+
+
+
+.bar.bar-clear {
+  .title {
+    color: black;
+  }
+}
+
+.bar.transparent {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+ion-modal-view {
+  .bar {
+
+    .title {
+      color: #888;
+      text-align: center !important;
+      left: 37px;
+      right: 37px;
+    }
+
+  }
+  .bar {
+    background-color: $background;
+  }
+  ion-content {
+    background-color: $background;
+  }
+}
+
+.main-header {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+input {
+  border-radius: 0 !important;
 }

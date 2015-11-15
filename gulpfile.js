@@ -7,6 +7,7 @@ var minifyCss = require('gulp-minify-css');
 var rename = require('gulp-rename');
 var sh = require('shelljs');
 var ts = require('gulp-typescript');
+var watch = require('gulp-watch');
 
 var paths = {
   sass: ['./scss/**/*.scss'],
@@ -16,28 +17,44 @@ var paths = {
 
 gulp.task('default', ['sass', 'ts', 'concat-css']);
 
-gulp.task('sass', function(done) {
-  gulp.src(paths.sass)
+var tsTask = function() {
+  var tsResult = gulp.src(paths.ts)
+    .pipe(ts({
+      out: 'app.js',
+      target: 'ES5'
+    }));
+  return tsResult.js.pipe(gulp.dest('www/js'));
+};
+
+var sassTask = function(done) {
+  var s = gulp.src(paths.sass)
     .pipe(sass({
       errLogToConsole: true
     }))
     .pipe(minifyCss({
       keepSpecialComments: 0
     }))
-    .pipe(gulp.dest('./.tmp/css/'))
-    .on('end', done);
-});
+    .pipe(gulp.dest('./.tmp/css/'));
 
-gulp.task('concat-css', function() {
+  if (typeof done === 'function') {
+    s.on('end', done);
+  }
+};
+
+var cssTask = function() {
   return gulp.src('./.tmp/css/**/*.css')
     .pipe(concat('style.min.css'))
     .pipe(gulp.dest('./www/css/'));
-});
+};
+
+gulp.task('sass', sassTask);
+
+gulp.task('concat-css', cssTask);
 
 gulp.task('watch', function() {
-  gulp.watch(paths.sass, ['sass']);
-  gulp.watch(paths.ts, ['ts']);
-  gulp.watch(paths.css, ['concat-css']);
+  watch(paths.sass, sassTask);
+  watch(paths.ts, tsTask);
+  watch(paths.css, cssTask);
 });
 
 gulp.task('install', ['git-check'], function() {
@@ -60,11 +77,4 @@ gulp.task('git-check', function(done) {
   done();
 });
 
-gulp.task('ts', function() {
-  var tsResult = gulp.src(paths.ts)
-    .pipe(ts({
-      out: 'app.js',
-      target: 'ES5'
-    }));
-  return tsResult.js.pipe(gulp.dest('www/js'));
-});
+gulp.task('ts', tsTask);

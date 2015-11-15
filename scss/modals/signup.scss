@@ -1,0 +1,14 @@
+.modal-signup {
+  .list {
+    margin: 16px 0;
+  }
+  .item {
+    border-bottom-width: 0;
+    margin: 0 1px;
+    padding: 8px;
+
+    &:last-child {
+      border-bottom-width: 1px;
+    }
+  }
+}

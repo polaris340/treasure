@@ -2,10 +2,10 @@ var CONSTANTS = {
   API_URL: 'http://54.64.176.231:8080'
 };
 
-var app = angular.module('Treasure', ['ionic', 'ionic-toast'])
+var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
 
-  .run(function($ionicPlatform, $rootScope, $state, auth) {
-    $ionicPlatform.ready(function() {
+  .run(function ($ionicPlatform, $rootScope, $state, auth, db) {
+    $ionicPlatform.ready(function () {
       // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
       // for form inputs)
       if (window.cordova && window.cordova.plugins && window.cordova.plugins.Keyboard) {
@@ -16,6 +16,12 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast'])
       if (window.StatusBar) {
         // org.apache.cordova.statusbar required
         StatusBar.styleLightContent();
+      }
+
+      try {
+        db.initialize();
+      } catch (e) {
+
       }
     });
 
@@ -28,7 +34,7 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast'])
       }
     });
   })
-  .config(function($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, $ionicConfigProvider) {
     $stateProvider
 
       .state('map', {
@@ -37,7 +43,7 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast'])
         templateUrl: 'templates/treasure-map.html',
         loginRequired: true
       })
-    .state('login', {
+      .state('login', {
         url: '/login',
         controller: 'LoginController',
         templateUrl: 'templates/login.html'

@@ -1,22 +1,122 @@
-<div class="bar bar-header item-input-inset">
-  <label class="item-input-wrapper">
-    <i class="icon ion-ios-search placeholder-icon"></i>
-    <input type="search" placeholder="문화재 검색">
-  </label>
-  <button class="button button-clear">
-    <i class="icon ion-ios-close-empty"></i>
-  </button>
-</div>
+<ion-side-menus>
+  <!-- Left menu -->
+  <ion-side-menu side="left">
+    <div class="bar bar-header bar-clear">
+      <div class="title">{{ $root.user.username }}</div>
+    </div>
+    <ion-content class="has-header">
+      <div class="list">
+        <div class="item">
+          <div class="row">
+            <div class="col">
+              <div class="user-info-item" ng-click="openExploredTreasuresModal()">
+                <icon height="28" padding="4"
+                      src="img/icon/ic_found_o.png"></icon>
+                {{ $root.user.totalExplored }}
+                <br/>찾은 보물
+              </div>
+            </div>
+            <div class="col">
+              <div class="user-info-item" ng-click="openLikedTreasuresModal()">
+                <icon height="28" padding="4"
+                      src="img/icon/ic_heart_blue.png"></icon>
+                {{ $root.user.totalLiked }}
+                <br/>찜한 보물
+              </div>
+            </div>
+            <div class="col">
+              <div class="user-info-item">
+                <icon height="28" padding="4"
+                      src="img/icon/ic_point.png"></icon>
+                {{ $root.user.currentPoints }}
+                <br/>내 포인트
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="item item-divider positive">
+          <i class="icon ion-ios-gear"></i> 설정
+        </div>
+        <div class="item">
+          공지사항
+        </div>
+        <div class="item">
+          소개
+        </div>
+        <div class="item">
+          앱 설정
+        </div>
+        <div class="item">
+          앱 버전 정보
+        </div>
+        <div class="item" ng-click="$root.logout()">
+          로그아웃
+        </div>
+      </div>
+    </ion-content>
 
-<div id="map" data-tap-disabled="true"></div>
+  </ion-side-menu>
+  <ion-side-menu-content>
+    <!-- Main content, usually <ion-nav-view> -->
 
-<div class="bottom-bar" ng-show="selectedTreasure" ng-click="showTreasureDetailModal()">
-  <div class="title">{{ selectedTreasure.name }}</div>
-  <div class="info"><i class="icon ion-star"></i> 12</div>
-  <div class="right-button-wrap" ng-show="selectedTreasure && currentPositionMarker">
-    <i class="icon ion-navigate"></i>
-    <div class="distance">300m</div>
-  </div>
 
-</div>
+    <div class="bar bar-header bar-stable has-icon transparent main-header">
+      <icon height="32" padding="4" src="img/icon/ic_user.png"
+            ng-click="toggleLeft();"></icon>
+      <span class="flex"></span>
+      <icon height="32" padding="4" src="img/icon/ic_search.png"
+            ng-click="enterSearchMode()"></icon>
+    </div>
 
+    <div class="bar bar-header item-input-inset search-box bar-positive"
+         ng-class="{'search-mode': searchMode}">
+      <label class="item-input-wrapper">
+        <i class="icon ion-ios-search placeholder-icon"></i>
+        <ion-spinner icon="dots"
+                     ng-show="searchDefer || searchPromise"></ion-spinner>
+        <input type="search" placeholder="문화재 검색"
+               ng-model="searchParams.keyword">
+      </label>
+      <button class="button button-clear"
+              ng-click="leaveSearchMode()">
+        <i class="icon ion-ios-close-empty"></i>
+      </button>
+    </div>
+
+    <div id="map" data-tap-disabled="true"></div>
+
+    <div class="bottom-bar" ng-show="selectedTreasure"
+         ng-click="showTreasureDetailModal()">
+      <div class="title">{{ selectedTreasure.name }}</div>
+      <div class="info">
+        <ion-spinner icon="lines"
+                     ng-show="lock['/treasures/' + selectedTreasure.id] && !selectedTreasure.type"></ion-spinner>
+        <span
+          class="treasure-type">{{ selectedTreasure.type }}</span>
+        &nbsp;&nbsp;<icon height="18" src="img/icon/ic_found_o.png"></icon>
+        {{ selectedTreasure.totalExplored }}
+        &nbsp;&nbsp;<icon height="18" src="img/icon/ic_heart_blue.png"></icon>
+        {{ selectedTreasure.totalLiked }}
+      </div>
+      <div class="right-button-wrap"
+           ng-show="selectedTreasure && currentPositionMarker">
+        <i class="direction-indicator icon ion-navigate"
+           style="transition: transform .3s linear; transform: rotate({{ -45 + angleToSelectedTreasure }}deg);"></i>
+
+        <div class="distance">{{ distanceToSelectedTreasure }}</div>
+      </div>
+
+    </div>
+
+    <div class="btn-my-location" ng-show="currentPositionMarker"
+         ng-click="toCurrentLocation()">
+      <i class="icon ion-android-locate"></i>
+    </div>
+
+    <snackbar
+      ng-class="{ show: !searchMode && currentZoomLevel < MIN_ZOOM_LEVEL_FOR_MARKER }"
+      message="'지도를 확대해주세요'"
+      ></snackbar>
+
+  </ion-side-menu-content>
+</ion-side-menus>

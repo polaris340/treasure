@@ -1,0 +1,1 @@
+.search-box{position:fixed;top:-50px;left:0;width:100%;transition:top .1s ease}.search-box.search-mode{top:0}.search-box ion-spinner{position:absolute;right:50px;top:12px}.search-box ion-spinner svg{width:20px;height:20px}.platform-ios .search-box{top:-80px}.platform-ios .search-box.search-mode{top:0}

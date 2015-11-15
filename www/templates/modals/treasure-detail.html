@@ -1,9 +1,67 @@
-<ion-modal-view ng-controller="TreasureDetailController" >
+<ion-modal-view ng-controller="TreasureDetailController"
+                class="modal-treasure-detail">
   <ion-header-bar>
-    <h1 class="title">{{ treasure.name }}</h1>
-    <button class="button button-clear" ng-click="hideModal()"><i class="icon ion-ios-close-empty"></i></button>
+    <button class="button button-clear" ng-click="hideModal()"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">상세 정보</h1>
   </ion-header-bar>
-  <ion-content class="padding">
+  <ion-content class="padding has-footer">
+    <h3>
+      <button class="button-like-toggle" ng-class="{ liked: treasure.liked }"
+              ng-click="lock['/treasures/' + treasure.id + '/like'] || likeToggle()"></button>
+      {{ treasure.name }}
+    </h3>
+
+    <table class="treasure-info">
+      <tr>
+        <th>유형</th>
+        <td>{{ treasure.type }}</td>
+      </tr>
+      <tr>
+        <th>시대</th>
+        <td>{{ treasure.era }}</td>
+      </tr>
+      <tr>
+        <th>소재지</th>
+        <td>{{ treasure.address }}</td>
+      </tr>
+    </table>
+    <img ng-src="{{ treasure.imageUrl }}" alt="" ng-if="treasure.imageUrl"/>
+
+    <div class="label">상세 설명</div>
+    <pre>{{ treasure.description }}</pre>
+
 
   </ion-content>
+  <div class="tabs tabs-icon-top treasure-detail-menu">
+    <a class="tab-item" ng-click="showQuizModal()">
+      <i class="icon">
+        <div class="image"
+             style="background-image:url('img/icon/ic_quiz.png');"></div>
+      </i>
+      퀴즈 풀기
+    </a>
+
+    <a class="tab-item button-found" ng-class="{ explored: treasure.explored }"
+       ng-disabled="treasure.explored"
+      ng-click="showExploreModal()"
+      >
+      <div class="button-found-background"></div>
+      <div>
+        <i class="icon">
+          <div class="image"
+               style="background-image:url('img/icon/ic_check.png');"></div>
+        </i>
+        찾기인증
+      </div>
+    </a>
+
+    <a class="tab-item" ng-click="showCommentModal()">
+      <i class="icon">
+        <div class="image"
+             style="background-image:url('img/icon/ic_comment.png');"></div>
+      </i>
+      인증샷/댓글
+    </a>
+  </div>
 </ion-modal-view>

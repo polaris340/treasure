@@ -1,0 +1,28 @@
+<ion-modal-view ng-controller="TreasureListController"
+                class="modal-treasure-list">
+  <ion-header-bar>
+    <button class="button button-clear" ng-click="hideModal()"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">{{ title }}</h1>
+  </ion-header-bar>
+  <ion-content class="has-footer">
+    <div class="list">
+      <div class="item" ng-repeat="treasure in treasures">
+        <h2>{{ treasure.name }}</h2>
+
+        <p class="info">
+        <span
+          class="treasure-type">{{ treasure.type }}</span>
+          &nbsp;&nbsp;
+          <icon height="18" src="img/icon/ic_found_o.png"></icon>
+          {{ treasure.totalExplored }}
+          &nbsp;&nbsp;
+          <icon height="18" src="img/icon/ic_heart_blue.png"></icon>
+          {{ treasure.totalLiked }}
+        </p>
+      </div>
+    </div>
+
+  </ion-content>
+
+</ion-modal-view>

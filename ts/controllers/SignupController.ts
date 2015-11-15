@@ -1,4 +1,4 @@
-app.controller('SignupController', ['$scope', '$ionicLoading', 'message', 'auth', 'api', function($scope, $ionicLoading, message, auth, api) {
+app.controller('SignupController', ['$scope', '$ionicLoading', 'message', 'auth', 'api', 'modal', function($scope, $ionicLoading, message, auth, api, modal) {
   $scope.signupParams = {
     username: "",
     password: "",
@@ -34,7 +34,6 @@ app.controller('SignupController', ['$scope', '$ionicLoading', 'message', 'auth'
   };
 
   $scope.hideSignupModal = function() {
-    $scope.$parent.signupModal.hide();
-    $scope.$parent.signupModal.remove();
+    modal.hide('signup');
   }
 }]);

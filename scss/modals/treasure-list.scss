@@ -1,0 +1,12 @@
+@import "../vars/colors";
+
+.modal-treasure-list {
+  .treasure-type {
+    color: white;
+    background-color: $positive;
+    display: inline-block;
+    border-radius: 10px;
+    line-height: 20px;
+    padding: 0 10px;
+  }
+}

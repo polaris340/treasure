@@ -1,0 +1,78 @@
+@import "../vars/_colors";
+
+.quiz {
+  ion-content {
+    background-size: cover;
+    background-position: center;
+    .content-wrap {
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+
+
+    }
+  }
+
+  .slider {
+    height: 100%;
+  }
+
+  ion-slide {
+    padding: 8px;
+  }
+
+  .box {
+    background-color: #FEFEFE;
+    padding: 16px 16px 40px;
+    box-shadow: 0 2px 3px #aaa;
+    h3 {
+      color: $positive;
+    }
+  }
+
+  .input-box {
+    margin-top: 16px;
+    line-height: 48px;
+    white-space: nowrap;
+
+    input {
+      display: inline-block;
+      height: 40px;
+      padding: 0 16px;
+      border-bottom: 1px solid $positive;
+      width: calc(100% - 88px);
+      margin-right: 8px;
+      border-radius: 0;
+    }
+
+    .button {
+      min-height: 0;
+      height: 40px;
+      margin: 0;
+      width: 80px;
+      border: none;
+      border-radius: 0;
+      vertical-align: middle;
+    }
+  }
+
+  .page-indicator-wrap {
+    position: fixed;
+    text-align: center;
+    bottom: 24px;
+    left: 0;
+    width: 100%;
+
+    .page-indicator {
+      display: inline-block;
+      background-color: white;
+      border: 1px solid $positive;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin: 0 4px;
+      &.current {
+        background-color: $positive;
+      }
+    }
+  }
+}

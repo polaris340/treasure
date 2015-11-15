@@ -1,4 +1,4 @@
-app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', '$ionicModal', '$state', 'api', 'auth', function ($scope, $ionicLoading, $ionicHistory, $ionicModal, $state, api, auth) {
+app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', 'modal', '$state', 'api', 'auth', function ($scope, $ionicLoading, $ionicHistory, modal, $state, api, auth) {
   $ionicHistory.clearHistory();
 
   $scope.loginParams = {
@@ -24,11 +24,6 @@ app.controller('LoginController', ['$scope', '$ionicLoading', '$ionicHistory', '
   };
 
   $scope.showSignupModal = function() {
-    $ionicModal.fromTemplateUrl('templates/modals/signup.html', {
-      scope: $scope
-    }).then(function(modal) {
-      $scope.signupModal = modal;
-      modal.show();
-    });
+    modal.show('signup', 'templates/modals/signup.html', $scope);
   };
 }]);

@@ -1,23 +1,20 @@
-<ion-modal-view ng-controller="SignupController" >
-  <ion-header-bar>
-    <h1 class="title">회원가입</h1>
+<ion-modal-view ng-controller="SignupController" class="modal-signup">
+  <ion-header-bar class="bar-positive">
     <button class="button button-clear" ng-click="hideSignupModal()"><i class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">회원가입</h1>
   </ion-header-bar>
   <ion-content class="padding">
-    <div class="list">
-      <label class="item item-input item-floating-label">
-        <span class="input-label">아이디</span>
+    <form class="list" ng-submit="signup()">
+      <label class="item item-input">
         <input type="text" placeholder="아이디" required ng-model="signupParams.username">
       </label>
-      <label class="item item-input item-floating-label">
-        <span class="input-label">비밀번호</span>
+      <label class="item item-input">
         <input type="password" placeholder="비밀번호" required ng-model="signupParams.password">
       </label>
-      <label class="item item-input item-floating-label">
-        <span class="input-label">비밀번호 확인</span>
+      <label class="item item-input">
         <input type="password" placeholder="비밀번호 확인" required ng-model="signupParams.passwordConfirm">
       </label>
-    </div>
+    </form>
     <button class="button button-positive button-block" ng-click="signup()">
       회원가입
     </button>

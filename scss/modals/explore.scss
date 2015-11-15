@@ -1,0 +1,22 @@
+.modal-explore {
+  .center-box {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    margin-top: -100px;
+    color: #aaa;
+    ion-spinner {
+      svg {
+        width: 100px;
+        height: 100px;
+        margin: 20px;
+      }
+    }
+
+    .message {
+      line-height: 40px;
+      font-size: 16px;
+    }
+  }
+}

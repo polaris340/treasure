@@ -1,0 +1,70 @@
+<ion-modal-view ng-controller="CommentController"
+                class="modal-comment">
+  <ion-header-bar>
+    <button class="button button-clear" ng-click="hideModal()"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">인증샷/댓글</h1>
+  </ion-header-bar>
+  <ion-content class="has-footer">
+    <ion-list class="list">
+      <div class="item text-center"
+           ng-show="lock['/treasures/' + treasure.id + '/comments'] && comments.length === 0">
+        <ion-spinner></ion-spinner>
+      </div>
+      <div class="item item-divider"
+           ng-show="!lock['/treasures/' + treasure.id + '/comments'] && comments.length === 0">
+        댓글이 없습니다.
+      </div>
+      <ion-item class="item comment-item item-text-wrap"
+                ng-repeat="comment in comments">
+        <p class="comment-info"><icon height="16" src="img/icon/ic_found_o.png"></icon> {{ comment.username }} <span
+          class="commented-time">{{ comment.created | date: 'yyyy년 MM월 dd일' }}</span>
+        </p>
+
+        <h2>{{ comment.body }}</h2>
+
+        <div class="image" ng-if="comment.thumbnailUrl"
+             style="background-image: url('{{ comment.thumbnailUrl }}');"
+             ng-click="showImage(comment.imageUrl)"></div>
+
+        <ion-option-button class="button-assertive"
+                           ng-show="comment.isMine"
+                           ng-click="deleteComment(comment)"><i
+          class="icon ion-ios-close"></i></ion-option-button>
+      </ion-item>
+
+    </ion-list>
+    <ion-infinite-scroll
+      ng-hide="end || comments.length === 0"
+      on-infinite="end || loadData()"
+      distance="1%">
+    </ion-infinite-scroll>
+  </ion-content>
+
+  <span class="label-comment-image" ng-click="getPicture()"><i
+    class="icon ion-camera"></i></span>
+
+  <div class="comment-image" ng-class="{full: fullImage}"
+       ng-click="fullImage = !fullImage"
+       style="background-image: url('{{ commentImageUri }}');" alt=""
+       ng-show="commentImageUri">
+    <button class="btn-close" ng-click="commentImageUri = ''"><i
+      class="icon ion-ios-close"></i></button>
+  </div>
+  <form class="bar bar-footer item-input-inset" ng-submit="addComment()">
+    <label class="item-input-wrapper">
+      <input type="text" placeholder="댓글" ng-model="newCommentData.body">
+    </label>
+    <button class="button button-clear">
+      등록
+    </button>
+  </form>
+
+  <div class="image-upload-progress">
+    <div style="width: {{ imageUploadProgress }}%"
+         ng-show="imageUploadProgress > 0 && imageUploadProgress < 0"></div>
+  </div>
+
+  <div class="full-image" style="background-image: url('{{ fullImageUrl }}');"
+       ng-click="showImage('')" ng-show="fullImageUrl"></div>
+</ion-modal-view>

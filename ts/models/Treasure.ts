@@ -19,6 +19,7 @@ interface ITreasureData {
   description: string
   era: string
   explored: boolean
+  liked: boolean
   imageUrl: string
   latitude: number
   longitude: number
@@ -30,14 +31,17 @@ interface ITreasureData {
 
 // methods
 interface ITreasure extends ITreasureData {
-
+  setMarkerIcon(selected:boolean): void
+  update(data: ITreasureData): void
 }
 
 class Treasure implements ITreasure {
+
   id: number;
   address: string;
   description: string;
   era: string;
+  liked:boolean;
   explored: boolean;
   imageUrl: string;
   latitude: number;
@@ -46,26 +50,55 @@ class Treasure implements ITreasure {
   qrcodeUrl: string;
   type: string;
 
-  map: any;
   _marker: any;
 
-  constructor (treasureData: ITreasureData, map: any) {
+  constructor (treasureData: ITreasureData) {
     for (var key in treasureData) {
-      this[key] = treasureData[key];
-      this.map = map;
+      var val = treasureData[key];
+      if (val === 'true') {
+        val = true;
+      }
+      if (val === 'false') {
+        val = false;
+      }
+      this[key] =  val;
     }
   }
 
   get marker() {
     if (!this._marker) {
+      //var icon = 'img/icon/ic_marker_default.png';
+      //if (this.explored) {
+      //  icon = 'img/icon/ic_marker_found.png';
+      //} else if (this.liked) {
+      //  icon = 'img/icon/ic_marker_liked.png';
+      //}
+
       var latLng = new google.maps.LatLng(this.latitude, this.longitude);
       this._marker = new google.maps.Marker({
         position: latLng,
-        title: this.name,
-        icon: this.explored ? 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' : 'http://maps.google.com/mapfiles/ms/icons/green-dot.png'
+        title: this.name
       });
+      this.setMarkerIcon(false);
     }
 
     return this._marker;
+  }
+
+
+  setMarkerIcon(selected:boolean):void {
+    var icon = 'img/icon/ic_marker_';
+    if (selected) icon += 'selected_';
+    var suffix = 'default';
+    if (this.explored) suffix = 'found';
+    else if (this.liked) suffix = 'liked';
+    icon += suffix + '.png';
+    this.marker.setIcon(icon);
+  }
+
+  update(data:ITreasureData) {
+    for (var key in data) {
+      this[key] = data[key];
+    }
   }
 }

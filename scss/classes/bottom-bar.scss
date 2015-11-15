@@ -1,18 +1,29 @@
+@import "../vars/_colors.scss";
+
 .bottom-bar {
   position: fixed;
   width: 100%;
-  height: 64px;
+  height: 80px;
   background-color: white;
   bottom: 0;
   left: 0;
   box-sizing: border-box;
-  padding: 12px;
+  padding: 12px 18px 12px;
   box-shadow: 0 -2px 2px #ccc;
 
   .title {
-    font-size: 1.2em;
-    font-weight: bold;
+    font-size: 1.5em;
     margin-bottom: 4px;
+    line-height: 32px;
+  }
+
+  .treasure-type {
+    color: white;
+    background-color: $positive;
+    display: inline-block;
+    border-radius: 10px;
+    line-height: 20px;
+    padding: 0 10px;
   }
 
   .right-button-wrap {
@@ -23,11 +34,24 @@
     height: 64px;
     text-align: center;
     padding: 16px 0 8px;
+    color: #888;
 
     .icon {
       display: block;
-      font-size: 24px;
+      font-size: 32px;
       transform: rotate(-45deg);
+      color: $assertive;
+    }
+  }
+
+  .info {
+    ion-spinner {
+      vertical-align: middle;
+      svg {
+        width: 16px;
+        height: 16px;
+        stroke: $assertive;
+      }
     }
   }
 }

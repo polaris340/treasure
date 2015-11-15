@@ -1,0 +1,17 @@
+<ion-modal-view ng-controller="ExploreModalController" class="modal-explore">
+  <ion-header-bar>
+    <button class="button button-clear" ng-click="hideModal()"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">찾기 인증</h1>
+  </ion-header-bar>
+  <ion-content scroll="false">
+    <div class="center-box text-center">
+      <ion-spinner ng-show="exploreStatus === 'waiting'"></ion-spinner>
+      <icon height="100" src="img/icon/ic_explore_success.png" ng-show="exploreStatus === 'success'"></icon>
+      <icon height="100" src="img/icon/ic_explore_fail.png" ng-show="exploreStatus === 'fail'"></icon>
+      <div class="message">
+        {{ message }}
+      </div>
+    </div>
+  </ion-content>
+</ion-modal-view>

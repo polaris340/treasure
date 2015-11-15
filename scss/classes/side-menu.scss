@@ -1,0 +1,34 @@
+@import "../vars/_colors";
+
+ion-side-menu {
+  ion-content {
+    background-color: $background;
+  }
+
+
+  .item:first-child {
+    padding: 0;
+    .row {
+      padding: 0 8px;
+    }
+    .col {
+      text-align: center;
+      padding: 8px;
+      font-size: .8em;
+      border-right: 1px solid #ccc;
+      &:last-child {
+        border: none;
+      }
+
+      .user-info-item {
+        line-height: 20px;
+        margin: 0 auto;
+        display: inline-block;
+      }
+    }
+  }
+
+  .item.item-divider {
+    font-size: .9em;
+  }
+}

@@ -1,0 +1,33 @@
+<ion-modal-view ng-controller="QuizController" class="quiz">
+  <ion-header-bar>
+    <h1 class="title">퀴즈 풀기</h1>
+    <button class="button button-clear" ng-click="hideModal()"><i
+      class="icon ion-ios-close-empty"></i></button>
+  </ion-header-bar>
+  <ion-content
+    scroll="false"
+    style="background-image: url('{{ treasure.imageUrl }}');">
+    <div class="content-wrap">
+      <ion-slide-box show-pager="false" on-slide-changed="currentPageIndex = $index">
+        <ion-slide ng-repeat="quiz in quizzes">
+          <div class="box">
+            <h3>Q {{ $index + 1 }}</h3>
+            <pre>{{ quiz.question }}</pre>
+          </div>
+
+          <div class="input-box" ng-if="!quiz.solved">
+            <input type="text" ng-model="quiz.userAnswer" placeholder="답을 입력하세요"/><button class="button button-positive" ng-click="checkAnswer(quiz)">확인</button>
+          </div>
+        </ion-slide>
+      </ion-slide-box>
+    </div>
+
+    <div class="page-indicator-wrap">
+      <span class="page-indicator" ng-repeat="quiz in quizzes" ng-class="{
+        current: currentPageIndex === $index,
+        solved: quiz.solved
+       }">
+      </span>
+    </div>
+  </ion-content>
+</ion-modal-view>
