@@ -1,0 +1,24 @@
+<ion-modal-view class="read-story">
+  <ion-header-bar>
+    <button class="button button-clear"
+            ng-click="$root.hideModal('readStory')"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">{{ story.username }}님의 사연</h1>
+  </ion-header-bar>
+  <ion-content>
+    <div class="list">
+      <div class="item title-item">
+        <h2>{{ story.title }}
+          <i class="icon ion-ios-trash-outline" ng-if="story.isMine"
+             ng-click="deleteStory(story)"></i></h2>
+
+        <p>{{ story.username }}
+          <small>| {{ story.created | date:'yyyy-mm-dd' }}</small>
+        </p>
+      </div>
+      <div class="item item-wrap">
+        <pre>{{ story.body }}</pre>
+      </div>
+    </div>
+  </ion-content>
+</ion-modal-view>

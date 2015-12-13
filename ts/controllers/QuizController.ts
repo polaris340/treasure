@@ -9,19 +9,21 @@ app.controller('QuizController', ['$scope', '$rootScope', '$ionicSlideBoxDelegat
       modal.hide('quiz');
     };
 
-    api.request({
-      url: '/treasures/' + $scope.treasure.id + '/quizzes',
-      method: 'get',
-      scope: $scope
-    }, function (response) {
-      $scope.quizzes = response.quizzes;
-      $ionicSlideBoxDelegate.update();
-    });
+    if ($scope.quizzes.length === 0 && $scope.treasure) {
+      api.request({
+        url: '/treasures/' + $scope.treasure.id + '/quizzes',
+        method: 'get',
+        scope: $scope
+      }, function (response) {
+        $scope.quizzes = response.quizzes;
+        $ionicSlideBoxDelegate.update();
+      });
+    }
 
     $scope.checkAnswer = function (quiz) {
       $ionicLoading.show();
       api.request({
-        url: '/treasures/' + $scope.treasure.id + '/quizzes/' + quiz.id,
+        url: '/treasures/' + quiz.tid + '/quizzes/' + quiz.id,
         method: 'post',
         data: {
           answer: quiz.userAnswer

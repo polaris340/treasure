@@ -16,6 +16,7 @@ app.controller('LoginController', ['$scope', '$rootScope', '$ionicLoading', '$io
     api.request(options, function (res, status) {
         api.setAuthToken(res.token);
         $scope.hideLoginModal();
+        auth.requestUserData();
         $rootScope.$broadcast('login.success');
       },
       null,

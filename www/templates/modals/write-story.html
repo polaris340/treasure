@@ -1,0 +1,28 @@
+<ion-modal-view ng-controller="WriteStoryController" class="write-story">
+  <ion-header-bar>
+    <button class="button button-clear"
+            ng-click="$root.hideModal('writeStory')"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">사연 쓰기</h1>
+    <button class="button button-clear"
+            ng-click="submitStory()">
+      <i class="icon ion-ios-compose-outline"></i>
+    </button>
+  </ion-header-bar>
+  <ion-content
+    scroll="false">
+    <div class="list">
+      <label class="item item-input">
+        <input
+          ng-model="storyParams.title"
+          type="text" placeholder="제목">
+      </label>
+      <label class="item item-input item-body">
+        <textarea
+          ng-model="storyParams.body"
+          placeholder="내용을 입력해주세요"></textarea>
+      </label>
+    </div>
+
+  </ion-content>
+</ion-modal-view>

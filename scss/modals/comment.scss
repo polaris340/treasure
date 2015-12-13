@@ -113,4 +113,40 @@
     padding-left: 48px;
     box-shadow: 0 0 2px #ccc;
   }
+
+  .select-tab {
+    position: fixed;
+    top: 42px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3);
+    text-align: center;
+    z-index: 1001;
+  }
+
+  .story-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: right;
+    .btn-write-story {
+      font-size: 20px;
+      line-height: 48px;
+      width: 48px;
+      color: white;
+      margin: 16px;
+      padding: 0;
+      text-align: center;
+      background-color: #e61958;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      box-shadow: 0 2px 3px #888;
+
+      &:active {
+        background-color: #d60948;
+      }
+    }
+  }
 }

@@ -29,6 +29,11 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
       modal.show('guide', 'templates/guide.html');
     };
 
+    $rootScope.showStartPageModal = function() {
+      modal.show('startPage', 'templates/modals/start-page.html');
+    };
+    // $rootScope.showStartPageModal();
+
     $rootScope.hideModal = function(name) {
       modal.hide(name);
     };

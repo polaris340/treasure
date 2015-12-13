@@ -29,7 +29,10 @@
     <img ng-src="{{ treasure.imageUrl }}" alt="" ng-if="treasure.imageUrl"/>
 
     <div class="label">상세 설명</div>
-    <pre>{{ treasure.description }}</pre>
+    <div class="description-wrap">
+      <pre>{{ treasure.description }}</pre>
+      <!--<div class="btn-show-more">더 보기</div>-->
+    </div>
 
 
   </ion-content>
@@ -61,7 +64,7 @@
         <div class="image"
              style="background-image:url('img/icon/ic_comment.png');"></div>
       </i>
-      인증샷/댓글
+      인증샷
     </a>
   </div>
 </ion-modal-view>

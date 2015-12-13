@@ -26,6 +26,7 @@ interface ITreasureData {
   name: string
   qrcodeUrl: string
   type: string
+  difficulty: number
 
 }
 
@@ -44,15 +45,17 @@ class Treasure implements ITreasure {
   liked:boolean;
   explored: boolean;
   imageUrl: string;
-  latitude: number;
-  longitude: number;
+  private mLatitude: number;
+  private mLongitude: number;
   name: string;
   qrcodeUrl: string;
   type: string;
+  difficulty:number;
 
   _marker: any;
 
   constructor (treasureData: ITreasureData) {
+    this.id = treasureData.id;
     for (var key in treasureData) {
       var val = treasureData[key];
       if (val === 'true') {
@@ -100,5 +103,25 @@ class Treasure implements ITreasure {
     for (var key in data) {
       this[key] = data[key];
     }
+  }
+
+  set latitude(value: number) {
+    if (!this.mLatitude) {
+      this.mLatitude = value + ((Math.pow(this.id, 3) % 997 - 997) / 10000000);
+    }
+  }
+
+  get latitude() {
+    return this.mLatitude;
+  }
+
+  set longitude(value: number) {
+    if (!this.mLongitude) {
+      this.mLongitude = value + ((Math.pow(this.id, 2) % 997 - 997) / 10000000);
+    }
+  }
+
+  get longitude() {
+    return this.mLongitude;
   }
 }

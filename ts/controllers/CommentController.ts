@@ -1,6 +1,6 @@
 /// <reference path="../models/Comment.ts" />
 
-app.controller('CommentController', ['$scope', '$ionicLoading', 'api', 'modal', 'camera', function ($scope, $ionicLoading, api, modal, camera) {
+app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', 'api', 'modal', 'camera', 'message', function ($scope, $ionicLoading, $ionicPopup, api, modal, camera, message) {
   $scope.treasure = $scope.$parent.treasure;
   $scope.comments = [];
   $scope.newCommentData = {
@@ -11,6 +11,17 @@ app.controller('CommentController', ['$scope', '$ionicLoading', 'api', 'modal', 
   $scope.imageUploadProgress = 0;
   $scope.fullImageUrl = "";
   $scope.end = false;
+
+  $scope.currentTab = 'comment';
+
+  var addCommentSuccess = function(res) {
+    $scope.comments.unshift(new Comment(res.comment));
+    $scope.commentImageUri = '';
+
+    $scope.newCommentData = {
+      body: ""
+    };
+  }
 
   $scope.addComment = function () {
     if ($scope.commentImageUri) {
@@ -44,6 +55,9 @@ app.controller('CommentController', ['$scope', '$ionicLoading', 'api', 'modal', 
         }, options);
 
     } else {
+      // 이미지 없이 등록 불가
+      message.show('인증샷을 찍어주세요');
+      return;
       var options = {
         url: '/treasures/' + $scope.treasure.id + '/comments',
         method: 'post',
@@ -120,13 +134,54 @@ app.controller('CommentController', ['$scope', '$ionicLoading', 'api', 'modal', 
     modal.hide('comment');
   };
 
-  function addCommentSuccess (res) {
-    $scope.comments.unshift(new Comment(res.comment));
-    $scope.commentImageUri = '';
+  // 사연
+  $scope.showSelectTabMenu = false;
+  $scope.stories = [];
+  $scope.selectTab = function(tab) {
+    $scope.currentTab = tab;
+    $scope.showSelectTabMenu = false;
+  };
 
-    $scope.newCommentData = {
-      body: ""
-    };
-  }
+  $scope.loadStories = function() {
+    api.request({
+      url: '/treasures/' + $scope.treasure.id + '/stories',
+      method: 'get',
+      scope: $scope
+    }, function(res) {
+      for (var story of res.stories) {
+        $scope.stories.push(story);
+      }
+    });
+  };
+  $scope.loadStories();
+
+  $scope.showStoryModal = function(story) {
+    modal.show('readStory', 'templates/modals/read-story.html', $scope, {
+      story: story
+    });
+  };
+
+
+  $scope.showWriteStoryModal = function() {
+    modal.show('writeStory', 'templates/modals/write-story.html', $scope);
+  };
+
+  $scope.deleteStory = function(story) {
+    if (confirm('사연을 삭제하시겠습니까?')) {
+      $ionicLoading.show();
+      api.request({
+        url: '/treasures/' + $scope.treasure.id + '/stories/' + story.id,
+        method: 'delete',
+        scope: $scope
+      }, function(res) {
+        $ionicLoading.hide();
+        $scope.stories.splice($scope.stories.indexOf(story), 1);
+        modal.hide('readStory');
+      }, function(res) {
+        $ionicLoading.hide();
+      });
+    }
+  };
+
 
 }]);

@@ -1,0 +1,99 @@
+.start-page {
+  /*
+  transition: none !important;
+
+  ion-content {
+    background: -webkit-linear-gradient(#42B4F1, white);
+    background: linear-gradient(#42B4F1, white);
+
+    img.border {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+    }
+
+    p.slogan {
+      color: white;
+      position: fixed;
+      top: 5%;
+      width: 100%;
+      text-align: center;
+      font-size: 1.2em;
+    }
+
+    .logo-wrap {
+      position: fixed;
+      text-align: center;
+      top: 15%;
+      width: 100%;
+      left: 0;
+      img {
+        width: 60%;
+        height: auto;
+      }
+    }
+
+    .bottom-image {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+    }
+
+    .description {
+      position: fixed;
+      left: 10%;
+      top: 50%;
+
+      button {
+        font-size: 1.3em;
+        margin-top: 12px;
+        font-weight: bold;
+        background: radial-gradient(white, #30A1E0);
+        padding: 8px 24px;
+        line-height: 16px;
+        border: none;
+        border-radius: 16px;
+      }
+    }
+  }
+
+
+  //*/
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  transition: transform .3s ease;
+
+  &.started {
+    transform: translate3d(0, 100%, 0);
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .btn-start {
+    position: fixed;
+    bottom: 10%;
+    width: 100px;
+    height: 100px;
+    line-height: 100px;
+    left: 50%;
+    margin-left: -50px;
+    background: none;
+    background-color: rgba(255,255,255, 0.3);
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-size: 1.3em;
+    font-weight: bold;
+    padding: 0;
+  }
+}
