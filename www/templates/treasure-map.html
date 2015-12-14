@@ -95,6 +95,10 @@
         <i class="icon ion-ios-close-empty"></i>
       </button>
     </div>
+    <div class="list search-history" ng-show="searchMode && !searchParams.keyword && searchHistory.length > 0">
+      <div class="item item-divider">최근 검색 기록</div>
+      <div class="item" ng-repeat="history in searchHistory" ng-click="searchParams.keyword = history">{{ history }}</div>
+    </div>
 
     <div id="map" data-tap-disabled="true"></div>
 
@@ -163,9 +167,9 @@
 </ion-side-menus>
 
 
-<div class="start-page" ng-class="{started: started}">
-  <img src="img/start-page/border.png" alt="" class="border"
-       ng-click="startApp()">
-  <button class="btn-start"
-          ng-click="startApp()">시작하기</button>
-</div>
+<!--<div class="start-page" ng-class="{started: started}">-->
+  <!--<img src="img/start-page/border.png" alt="" class="border"-->
+       <!--ng-click="startApp()">-->
+  <!--<button class="btn-start"-->
+          <!--ng-click="startApp()">시작하기</button>-->
+<!--</div>-->

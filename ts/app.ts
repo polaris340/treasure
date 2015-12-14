@@ -51,13 +51,17 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         templateUrl: 'templates/treasure-map.html',
         loginRequired: true
       })
+      .state('start', {
+        url: '/',
+        templateUrl: 'templates/modals/start-page.html'
+      })
       .state('login', {
         url: '/login',
         controller: 'LoginController',
         templateUrl: 'templates/login.html'
       });
 
-    $urlRouterProvider.otherwise('/map');
+    $urlRouterProvider.otherwise('/');
 
     if (!ionic.Platform.isIOS()) {
       $ionicConfigProvider.scrolling.jsScrolling(false);

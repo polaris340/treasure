@@ -44,15 +44,52 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         templateUrl: 'templates/treasure-map.html',
         loginRequired: true
     })
+        .state('start', {
+        url: '/',
+        templateUrl: 'templates/modals/start-page.html'
+    })
         .state('login', {
         url: '/login',
         controller: 'LoginController',
         templateUrl: 'templates/login.html'
     });
-    $urlRouterProvider.otherwise('/map');
+    $urlRouterProvider.otherwise('/');
     if (!ionic.Platform.isIOS()) {
         $ionicConfigProvider.scrolling.jsScrolling(false);
     }
+});
+var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
+app.directive('icon', function () {
+    return {
+        restrict: 'E',
+        replace: true,
+        scope: {},
+        template: iconTemplate,
+        controller: function ($scope, $element, $attrs) {
+            $scope.padding = parseInt($attrs.padding || 0);
+            $scope.width = parseInt($attrs.width || 0);
+            $scope.height = parseInt($attrs.height || 0);
+            $scope.width = $scope.width || $scope.height;
+            $scope.height = $scope.height || $scope.width;
+            $scope.src = $attrs.src;
+            if ($scope.padding) {
+                $scope.width -= $scope.padding * 2;
+                $scope.height -= $scope.padding * 2;
+            }
+        }
+    };
+});
+var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
+app.directive('snackbar', function () {
+    return {
+        restrict: 'E',
+        scope: {
+            message: '=',
+            buttonText: '=',
+            action: '&'
+        },
+        template: snackbarTemplate
+    };
 });
 var Comment = (function () {
     function Comment(data) {
@@ -248,7 +285,7 @@ app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$
                 $scope.treasure.setMarkerIcon(true);
                 db.insert($scope.treasure);
                 $rootScope.user.totalExplored++;
-                $scope.message = '인증되었습니다';
+                $scope.message = '축하합니다! 보물을 찾았습니다.\n이 보물에 대한 난이도와 별점을 매겨 주세요.\n또한 이 보물을 찾은 소감을 사연댓글과\n인증샷으로 남겨 역사로 기록하세요.';
                 $scope.hideModal(3000);
             }, function () {
                 $ionicLoading.hide();
@@ -391,7 +428,8 @@ var Treasure = (function () {
     return Treasure;
 })();
 /// <reference path="../models/Treasure.ts" />
-app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message) {
+app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', '$ionicPlatform', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message, $ionicPlatform) {
+        $scope.searchHistory = storage.get('searchHistory') || [];
         $scope.MIN_ZOOM_LEVEL_FOR_MARKER = 12;
         $ionicHistory.clearHistory();
         $scope.currentPositionMarker = null;
@@ -441,19 +479,37 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             $scope.$digest();
             hideKeyboard();
         });
-        navigator.geolocation.watchPosition(function (pos) {
-            if ($scope.currentPositionMarker == null) {
-                map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-                $scope.currentPositionMarker = $scope.createCurrentPositionMarker();
-                $scope.currentPositionMarker.setMap($scope.map);
-                // 처음에 한번 불러옴
-                $scope.getTreasures();
-            }
-            $scope.currentPositionMarker.setPosition(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-            $scope.calculateDistance();
-            $scope.refreshPath();
-            $scope.$digest();
-        });
+        var watchPosition = function () {
+            navigator.geolocation.watchPosition(function (pos) {
+                if ($scope.currentPositionMarker == null) {
+                    map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+                    $scope.currentPositionMarker = $scope.createCurrentPositionMarker();
+                    $scope.currentPositionMarker.setMap($scope.map);
+                    // 처음에 한번 불러옴
+                    $scope.getTreasures();
+                }
+                $scope.currentPositionMarker.setPosition(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+                $scope.calculateDistance();
+                $scope.refreshPath();
+                $scope.$digest();
+            });
+        };
+        if (window.CheckGPS) {
+            window.CheckGPS.check(function () {
+                watchPosition();
+            }, function () {
+                alert('원활한 이용을 위해 GPS를 켜 주십시오');
+                var intervalId = setInterval(function () {
+                    window.CheckGPS.check(function () {
+                        watchPosition();
+                        clearInterval(intervalId);
+                    });
+                }, 1000);
+            });
+        }
+        else {
+            watchPosition();
+        }
         $scope.map = map;
         $scope.map.addListener('zoom_changed', function () {
             $scope.$apply(function () {
@@ -721,6 +777,20 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
                 method: 'get',
                 timeout: $scope.searchDefer.promise
             };
+            if (!$scope.searchParams.keyword) {
+                $scope.searchDefer = null;
+                $scope.searchPromise = null;
+                return;
+            }
+            var index = $scope.searchHistory.indexOf($scope.searchParams.keyword);
+            if (index >= 0) {
+                $scope.searchHistory.splice(index, 1);
+            }
+            $scope.searchHistory.unshift($scope.searchParams.keyword);
+            if ($scope.searchHistory.length > 10) {
+                $scope.searchHistory.pop();
+            }
+            storage.set('searchHistory', $scope.searchHistory);
             $http(options)
                 .then(function (response) {
                 $scope.searchDefer = null;
@@ -1116,39 +1186,6 @@ app.controller('WriteStoryController', function ($scope, $rootScope, api, $ionic
         }, function (res) {
             $ionicLoading.hide();
         });
-    };
-});
-var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
-app.directive('icon', function () {
-    return {
-        restrict: 'E',
-        replace: true,
-        scope: {},
-        template: iconTemplate,
-        controller: function ($scope, $element, $attrs) {
-            $scope.padding = parseInt($attrs.padding || 0);
-            $scope.width = parseInt($attrs.width || 0);
-            $scope.height = parseInt($attrs.height || 0);
-            $scope.width = $scope.width || $scope.height;
-            $scope.height = $scope.height || $scope.width;
-            $scope.src = $attrs.src;
-            if ($scope.padding) {
-                $scope.width -= $scope.padding * 2;
-                $scope.height -= $scope.padding * 2;
-            }
-        }
-    };
-});
-var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
-app.directive('snackbar', function () {
-    return {
-        restrict: 'E',
-        scope: {
-            message: '=',
-            buttonText: '=',
-            action: '&'
-        },
-        template: snackbarTemplate
     };
 });
 app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', function ($http, $rootScope, $state, $q, message, storage, modal) {

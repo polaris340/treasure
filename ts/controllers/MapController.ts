@@ -1,7 +1,7 @@
 /// <reference path="../models/Treasure.ts" />
 
-app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message) {
-
+app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', '$ionicPlatform', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message, $ionicPlatform) {
+  $scope.searchHistory = storage.get('searchHistory') || [];
 
   $scope.MIN_ZOOM_LEVEL_FOR_MARKER = 12;
   $ionicHistory.clearHistory();
@@ -60,24 +60,41 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     hideKeyboard();
   });
 
+  var watchPosition = function() {
+    navigator.geolocation.watchPosition(function (pos) {
+      if ($scope.currentPositionMarker == null) {
+        map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+        $scope.currentPositionMarker = $scope.createCurrentPositionMarker();
+        $scope.currentPositionMarker.setMap($scope.map);
+
+        // 처음에 한번 불러옴
+        $scope.getTreasures();
+      }
+      $scope.currentPositionMarker.setPosition(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+      $scope.calculateDistance();
+      $scope.refreshPath();
 
 
-  navigator.geolocation.watchPosition(function (pos) {
-    if ($scope.currentPositionMarker == null) {
-      map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-      $scope.currentPositionMarker = $scope.createCurrentPositionMarker();
-      $scope.currentPositionMarker.setMap($scope.map);
+      $scope.$digest();
+    });
+  };
 
-      // 처음에 한번 불러옴
-      $scope.getTreasures();
-    }
-    $scope.currentPositionMarker.setPosition(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-    $scope.calculateDistance();
-    $scope.refreshPath();
+  if (window.CheckGPS) {
+    window.CheckGPS.check(function() {
+      watchPosition();
+    }, function() {
+      alert('원활한 이용을 위해 GPS를 켜 주십시오');
+      var intervalId = setInterval(function() {
+        window.CheckGPS.check(function() {
+          watchPosition();
+          clearInterval(intervalId);
+        });
+      }, 1000);
+    });
+  } else {
+    watchPosition();
+  }
 
-
-    $scope.$digest();
-  });
 
   $scope.map = map;
   $scope.map.addListener('zoom_changed', function () {
@@ -399,6 +416,20 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       method: 'get',
       timeout: $scope.searchDefer.promise
     };
+    if (!$scope.searchParams.keyword) {
+      $scope.searchDefer = null;
+      $scope.searchPromise = null;
+      return;
+    }
+    var index = $scope.searchHistory.indexOf($scope.searchParams.keyword);
+    if (index >= 0) {
+      $scope.searchHistory.splice(index, 1);
+    }
+    $scope.searchHistory.unshift($scope.searchParams.keyword);
+    if ($scope.searchHistory.length > 10) {
+      $scope.searchHistory.pop();
+    }
+    storage.set('searchHistory', $scope.searchHistory);
 
     $http(options)
       .then(function (response) {
