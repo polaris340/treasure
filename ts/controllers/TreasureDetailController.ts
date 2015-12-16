@@ -41,10 +41,7 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
       message.show('로그인이 필요합니다');
       return;
     }
-    if (!$scope.treasure.explored) {
-      message.show('아직 찾지 못한 보물입니다.');
-      return;
-    }
+
     modal.show('comment', 'templates/modals/comment.html', $scope);
   };
 

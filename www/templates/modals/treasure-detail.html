@@ -3,12 +3,23 @@
   <ion-header-bar>
     <button class="button button-clear" ng-click="hideModal()"><i
       class="icon ion-ios-close-empty"></i></button>
-    <h1 class="title">상세 정보</h1>
+    <!--<h1 class="title">상세 정보</h1>-->
+
+    <div class="headerbar-right-buttons">
+      <span>
+        <icon height="16" src="img/icon/ic_waterdrop.png"></icon> 3
+      </span>
+      &nbsp;&nbsp;
+      <span>
+        <icon height="16" src="img/icon/ic_heart_blue.png"></icon> {{ treasure.totalLiked }}
+      </span>
+      <button class="button-clear" ng-click="lock['/treasures/' + treasure.id + '/like'] || likeToggle()">
+        <icon height="24" src="img/icon/ic_heart.png" ng-show="!treasure.liked"></icon><icon height="24" src="img/icon/ic_heart_full.png" ng-hide="!treasure.liked"></icon> 찜하기
+      </button>
+    </div>
   </ion-header-bar>
   <ion-content class="padding has-footer">
     <h3>
-      <button class="button-like-toggle" ng-class="{ liked: treasure.liked }"
-              ng-click="lock['/treasures/' + treasure.id + '/like'] || likeToggle()"></button>
       {{ treasure.name }}
     </h3>
 
@@ -64,7 +75,7 @@
         <div class="image"
              style="background-image:url('img/icon/ic_comment.png');"></div>
       </i>
-      인증샷
+      방문기록
     </a>
   </div>
 </ion-modal-view>

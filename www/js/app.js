@@ -58,39 +58,6 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         $ionicConfigProvider.scrolling.jsScrolling(false);
     }
 });
-var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
-app.directive('icon', function () {
-    return {
-        restrict: 'E',
-        replace: true,
-        scope: {},
-        template: iconTemplate,
-        controller: function ($scope, $element, $attrs) {
-            $scope.padding = parseInt($attrs.padding || 0);
-            $scope.width = parseInt($attrs.width || 0);
-            $scope.height = parseInt($attrs.height || 0);
-            $scope.width = $scope.width || $scope.height;
-            $scope.height = $scope.height || $scope.width;
-            $scope.src = $attrs.src;
-            if ($scope.padding) {
-                $scope.width -= $scope.padding * 2;
-                $scope.height -= $scope.padding * 2;
-            }
-        }
-    };
-});
-var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
-app.directive('snackbar', function () {
-    return {
-        restrict: 'E',
-        scope: {
-            message: '=',
-            buttonText: '=',
-            action: '&'
-        },
-        template: snackbarTemplate
-    };
-});
 var Comment = (function () {
     function Comment(data) {
         for (var key in data) {
@@ -120,6 +87,10 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
             };
         };
         $scope.addComment = function () {
+            if (!$scope.treasure.explored) {
+                message.show('아직 찾지 못한 보물입니다.');
+                return;
+            }
             if ($scope.commentImageUri) {
                 var options = new FileUploadOptions();
                 options.fileKey = "image";
@@ -147,7 +118,7 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
             }
             else {
                 // 이미지 없이 등록 불가
-                message.show('인증샷을 찍어주세요');
+                message.show('사진을 찍어주세요');
                 return;
                 var options = {
                     url: '/treasures/' + $scope.treasure.id + '/comments',
@@ -258,6 +229,17 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
                 });
             }
         };
+        var deregisterHardBack = $ionicPlatform.registerBackButtonAction(function () {
+            if ($scope.fullImageUrl) {
+                $scope.fullImageUrl = '';
+            }
+            else {
+                $scope.hideModal();
+            }
+        }, 100);
+        $scope.$on('$destroy', function () {
+            deregisterHardBack();
+        });
     }]);
 app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$ionicLoading', 'api', 'modal', 'message', 'db', function ($scope, $rootScope, $timeout, $ionicLoading, api, modal, message, db) {
         $scope.treasure = $scope.$parent.treasure;
@@ -268,7 +250,7 @@ app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$
             var currentPosition = $scope.$parent.$parent.currentPositionMarker.getPosition();
             var targetPosition = new google.maps.LatLng($scope.treasure.latitude, $scope.treasure.longitude);
             if (google.maps.geometry.spherical.computeDistanceBetween(currentPosition, targetPosition) > $scope.EXPLORE_DISTANCE) {
-                $scope.message = '인증 실패! 보물 근처로 이동해주세요';
+                $scope.message = "'찾기 인증'은 보물에 30m 이내로 접근해야 가능합니다.";
                 $scope.exploreStatus = 'fail';
                 $scope.hideModal(3000);
                 return;
@@ -428,7 +410,7 @@ var Treasure = (function () {
     return Treasure;
 })();
 /// <reference path="../models/Treasure.ts" />
-app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', '$ionicPlatform', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message, $ionicPlatform) {
+app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', '$ionicPlatform', '$ionicPopup', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message, $ionicPlatform, $ionicPopup) {
         $scope.searchHistory = storage.get('searchHistory') || [];
         $scope.MIN_ZOOM_LEVEL_FOR_MARKER = 12;
         $ionicHistory.clearHistory();
@@ -446,12 +428,8 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             path: [{ lat: 36, lng: 127 }, { lat: 36, lng: 127 }],
             geodesic: true,
             strokeColor: '#D83F2A',
-            strokeOpacity: 0,
-            icons: [{
-                    icon: lineSymbol,
-                    offset: '0',
-                    repeat: '20px'
-                }]
+            strokeOpacity: 1,
+            strokeWeight: 2
         });
         if (auth.isLogin()) {
             auth.requestUserData();
@@ -475,7 +453,8 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             }
         };
         map.addListener('mousedown', function () {
-            $scope.selectTreasure(null);
+            if (!$scope.exploringTreasure)
+                $scope.selectTreasure(null);
             $scope.$digest();
             hideKeyboard();
         });
@@ -634,7 +613,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
                 }];
             $scope.lineToTarget.setPath(path);
         };
-        $scope.selectTreasure = function (treasure) {
+        $scope.selectTreasure = function (treasure, panTo) {
             if ($scope.selectedTreasure) {
                 $scope.selectedTreasure.setMarkerIcon(false);
             }
@@ -655,6 +634,14 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
                     $scope.selectedTreasure.update(res.treasure);
                 }
             });
+            if (panTo) {
+                if ($scope.treasuresMap[treasure.id]) {
+                    treasure = $scope.treasuresMap[treasure.id];
+                }
+                treasure.marker.setMap($scope.map);
+                $scope.map.panTo(treasure.marker.getPosition());
+                $ionicSideMenuDelegate.toggleLeft(false);
+            }
             treasure.setMarkerIcon(true);
             $scope.selectedTreasure = treasure;
             //$scope.infoWindow.setContent(treasure.name);
@@ -720,6 +707,8 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             if (!$scope.currentPositionMarker) {
                 return;
             }
+            var currentMarkerPosition = $scope.currentPositionMarker.getPosition();
+            var currentMapCenterPosition = $scope.map.getCenter();
             $scope.map.panTo($scope.currentPositionMarker.getPosition());
         };
         $scope.createCurrentPositionMarker = function () {
@@ -971,16 +960,28 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             $window.location.reload(true);
         });
         /*
-        if (db.initialized && auth.isLogin()) {
-          syncData();
-        } else {
-          $scope.$on('db.initialized', function () {
-            if (auth.isLogin()) {
-              syncData();
-            }
-          });
-        }
-        //*/
+         if (db.initialized && auth.isLogin()) {
+         syncData();
+         } else {
+         $scope.$on('db.initialized', function () {
+         if (auth.isLogin()) {
+         syncData();
+         }
+         });
+         }
+         //*/
+        var deregisterHardBack = $ionicPlatform.registerBackButtonAction(function () {
+            $ionicPopup.confirm({
+                title: "'문화유산 보물찾기'를 종료하시겠습니까?"
+            }).then(function (res) {
+                if (res) {
+                    ionic.Platform.exitApp();
+                }
+            });
+        }, 100);
+        $scope.$on('$destroy', function () {
+            deregisterHardBack();
+        });
         $scope.started = false;
         $scope.startApp = function () {
             $scope.getTreasures();
@@ -1102,10 +1103,6 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
                 message.show('로그인이 필요합니다');
                 return;
             }
-            if (!$scope.treasure.explored) {
-                message.show('아직 찾지 못한 보물입니다.');
-                return;
-            }
             modal.show('comment', 'templates/modals/comment.html', $scope);
         };
         $scope.showExploreModal = function () {
@@ -1186,6 +1183,39 @@ app.controller('WriteStoryController', function ($scope, $rootScope, api, $ionic
         }, function (res) {
             $ionicLoading.hide();
         });
+    };
+});
+var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
+app.directive('icon', function () {
+    return {
+        restrict: 'E',
+        replace: true,
+        scope: {},
+        template: iconTemplate,
+        controller: function ($scope, $element, $attrs) {
+            $scope.padding = parseInt($attrs.padding || 0);
+            $scope.width = parseInt($attrs.width || 0);
+            $scope.height = parseInt($attrs.height || 0);
+            $scope.width = $scope.width || $scope.height;
+            $scope.height = $scope.height || $scope.width;
+            $scope.src = $attrs.src;
+            if ($scope.padding) {
+                $scope.width -= $scope.padding * 2;
+                $scope.height -= $scope.padding * 2;
+            }
+        }
+    };
+});
+var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
+app.directive('snackbar', function () {
+    return {
+        restrict: 'E',
+        scope: {
+            message: '=',
+            buttonText: '=',
+            action: '&'
+        },
+        template: snackbarTemplate
     };
 });
 app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', function ($http, $rootScope, $state, $q, message, storage, modal) {

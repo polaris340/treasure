@@ -8,18 +8,22 @@
   <ion-content class="has-footer">
     <div class="list">
       <div class="item" ng-repeat="treasure in treasures"
-           ng-click="$parent.selectTreasure(treasure); $parent.showTreasureDetailModal();">
+           ng-click="$parent.selectTreasure(treasure, true); hideModal();">
         <h2>{{ treasure.name }}</h2>
 
         <p class="info">
         <span
-          class="treasure-type">{{ treasure.type }}</span>
+          class="treasure-type">{{ treasure.type.split(' ')[0] }}</span>
+
+        <span ng-show="title === '찜한 보물'">
           &nbsp;&nbsp;
           <icon height="18" src="img/icon/ic_found_o.png"></icon>
           {{ treasure.totalExplored }}
           &nbsp;&nbsp;
           <icon height="18" src="img/icon/ic_heart_blue.png"></icon>
           {{ treasure.totalLiked }}
+        </span>
+          <span ng-hide="title === '찜한 보물'"> {{ treasure.exploredTime | date: 'yyyy-MM-dd hh:mm:ss'}}</span>
         </p>
       </div>
     </div>

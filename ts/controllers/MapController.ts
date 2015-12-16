@@ -1,6 +1,6 @@
 /// <reference path="../models/Treasure.ts" />
 
-app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', '$ionicPlatform', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message, $ionicPlatform) {
+app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', '$ionicPlatform', '$ionicPopup', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message, $ionicPlatform, $ionicPopup) {
   $scope.searchHistory = storage.get('searchHistory') || [];
 
   $scope.MIN_ZOOM_LEVEL_FOR_MARKER = 12;
@@ -20,12 +20,13 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     path: [{lat: 36, lng: 127}, {lat: 36, lng: 127}],
     geodesic: true,
     strokeColor: '#D83F2A',
-    strokeOpacity: 0,
-    icons: [{
-      icon: lineSymbol,
-      offset: '0',
-      repeat: '20px'
-    }]
+    strokeOpacity: 1,
+    strokeWeight: 2
+    //icons: [{
+    //  icon: lineSymbol,
+    //  offset: '0',
+    //  repeat: '20px'
+    //}]
   });
 
   if (auth.isLogin()) {
@@ -44,7 +45,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   var map = new google.maps.Map(document.getElementById("map"), mapOptions);
 
   var searchInput = null;
-  var hideKeyboard = function() {
+  var hideKeyboard = function () {
     if (!searchInput) {
       searchInput = document.getElementsByClassName('search-box')[0].getElementsByTagName('input')[0];
     }
@@ -55,12 +56,13 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   };
 
   map.addListener('mousedown', function () {
-    $scope.selectTreasure(null);
+    if (!$scope.exploringTreasure)
+      $scope.selectTreasure(null);
     $scope.$digest();
     hideKeyboard();
   });
 
-  var watchPosition = function() {
+  var watchPosition = function () {
     navigator.geolocation.watchPosition(function (pos) {
       if ($scope.currentPositionMarker == null) {
         map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
@@ -80,12 +82,12 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   };
 
   if (window.CheckGPS) {
-    window.CheckGPS.check(function() {
+    window.CheckGPS.check(function () {
       watchPosition();
-    }, function() {
+    }, function () {
       alert('원활한 이용을 위해 GPS를 켜 주십시오');
-      var intervalId = setInterval(function() {
-        window.CheckGPS.check(function() {
+      var intervalId = setInterval(function () {
+        window.CheckGPS.check(function () {
           watchPosition();
           clearInterval(intervalId);
         });
@@ -229,7 +231,6 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     }
 
 
-
     if ($scope.exploringTreasure.explored) {
       $scope.lineToTarget.setMap(null);
       return;
@@ -247,7 +248,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     $scope.lineToTarget.setPath(path);
   };
 
-  $scope.selectTreasure = function (treasure) {
+  $scope.selectTreasure = function (treasure, panTo) {
     if ($scope.selectedTreasure) {
       $scope.selectedTreasure.setMarkerIcon(false);
       // $scope.infoWindow.close();
@@ -271,6 +272,15 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
         $scope.selectedTreasure.update(res.treasure);
       }
     });
+
+    if (panTo) {
+      if ($scope.treasuresMap[treasure.id]) {
+        treasure = $scope.treasuresMap[treasure.id];
+      }
+      treasure.marker.setMap($scope.map);
+      $scope.map.panTo(treasure.marker.getPosition());
+      $ionicSideMenuDelegate.toggleLeft(false);
+    }
 
 
     treasure.setMarkerIcon(true);
@@ -344,12 +354,17 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       $scope.arrowIcon.rotation = magneticHeading;
       $scope.currentPositionMarker.setOptions({icon: $scope.arrowIcon});
     }
+
   };
+
 
   $scope.toCurrentLocation = function () {
     if (!$scope.currentPositionMarker) {
       return;
     }
+    var currentMarkerPosition = $scope.currentPositionMarker.getPosition();
+    var currentMapCenterPosition = $scope.map.getCenter();
+
     $scope.map.panTo($scope.currentPositionMarker.getPosition());
   };
 
@@ -626,20 +641,35 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     $window.location.reload(true);
   });
 
+
   /*
-  if (db.initialized && auth.isLogin()) {
-    syncData();
-  } else {
-    $scope.$on('db.initialized', function () {
-      if (auth.isLogin()) {
-        syncData();
+   if (db.initialized && auth.isLogin()) {
+   syncData();
+   } else {
+   $scope.$on('db.initialized', function () {
+   if (auth.isLogin()) {
+   syncData();
+   }
+   });
+   }
+   //*/
+
+  var deregisterHardBack = $ionicPlatform.registerBackButtonAction(function () {
+    $ionicPopup.confirm({
+      title: "'문화유산 보물찾기'를 종료하시겠습니까?"
+    }).then(function (res) {
+      if (res) {
+        ionic.Platform.exitApp();
       }
     });
-  }
-  //*/
+  }, 100);
+  $scope.$on('$destroy', function () {
+    deregisterHardBack();
+  });
+
 
   $scope.started = false;
-  $scope.startApp = function() {
+  $scope.startApp = function () {
     $scope.getTreasures();
     $scope.started = true;
   };

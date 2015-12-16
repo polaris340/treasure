@@ -13,6 +13,16 @@
 
   }
 
+  .headerbar-right-buttons {
+    position: absolute;
+    right: 0;
+    top: 0;
+    line-height: 44px;
+    button {
+      color: #333 !important;
+    }
+  }
+
   .button-like-toggle {
     border: none;
     width: 24px;

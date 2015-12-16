@@ -110,13 +110,15 @@
                      ng-show="lock['/treasures/' + selectedTreasure.id] && !selectedTreasure.type"></ion-spinner>
         <span
           class="treasure-type">{{ selectedTreasure.type.split(' ')[0] }}</span>
-        난이도: {{ selectedTreasure.difficulty }}
-        &nbsp;&nbsp;
+        <!--난이도: {{ selectedTreasure.difficulty }}-->
+        <!--&nbsp;&nbsp;-->
         <icon height="18" src="img/icon/ic_found_o.png"></icon>
         {{ selectedTreasure.totalExplored }}
         &nbsp;&nbsp;
-        <icon height="18" src="img/icon/ic_heart_blue.png"></icon>
-        {{ selectedTreasure.totalLiked }}
+        <icon height="18" src="img/icon/ic_marker_selected_default.png"></icon>
+        {{ distanceToSelectedTreasure }}
+        <!--<icon height="18" src="img/icon/ic_heart_blue.png"></icon>-->
+        <!--{{ selectedTreasure.totalLiked }}-->
       </div>
 
       <div class="right-button-wrap"
@@ -130,7 +132,7 @@
           ng-hide="selectedTreasure.explored || (exploringTreasure && (exploringTreasure.id === selectedTreasure.id))">
           <i class="icon ion-android-compass"></i><br>
           <button class="button button-small button-clear button-explore">
-            찾아가기
+            찾기
           </button>
         </div>
         <div

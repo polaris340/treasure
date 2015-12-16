@@ -21,9 +21,14 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
     $scope.newCommentData = {
       body: ""
     };
-  }
+  };
 
   $scope.addComment = function () {
+
+    if (!$scope.treasure.explored) {
+      message.show('아직 찾지 못한 보물입니다.');
+      return;
+    }
     if ($scope.commentImageUri) {
       var options = new FileUploadOptions();
       options.fileKey = "image";
@@ -56,7 +61,7 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
 
     } else {
       // 이미지 없이 등록 불가
-      message.show('인증샷을 찍어주세요');
+      message.show('사진을 찍어주세요');
       return;
       var options = {
         url: '/treasures/' + $scope.treasure.id + '/comments',
@@ -182,6 +187,17 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
       });
     }
   };
+
+  var deregisterHardBack = $ionicPlatform.registerBackButtonAction(function() {
+    if ($scope.fullImageUrl) {
+      $scope.fullImageUrl = '';
+    } else {
+      $scope.hideModal();
+    }
+  }, 100);
+  $scope.$on('$destroy', function() {
+    deregisterHardBack();
+  });
 
 
 }]);

@@ -7,7 +7,7 @@ app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$
     var currentPosition = $scope.$parent.$parent.currentPositionMarker.getPosition();
     var targetPosition = new google.maps.LatLng($scope.treasure.latitude, $scope.treasure.longitude);
     if (google.maps.geometry.spherical.computeDistanceBetween(currentPosition, targetPosition) > $scope.EXPLORE_DISTANCE) {
-      $scope.message = '인증 실패! 보물 근처로 이동해주세요';
+      $scope.message = "'찾기 인증'은 보물에 30m 이내로 접근해야 가능합니다.";
       $scope.exploreStatus = 'fail';
       $scope.hideModal(3000);
       return;

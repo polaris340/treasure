@@ -4,7 +4,7 @@
     <button class="button button-clear" ng-click="hideModal()"><i
       class="icon ion-ios-close-empty"></i></button>
     <h1 class="title" ng-click="showSelectTabMenu = !showSelectTabMenu">{{
-      currentTab === 'comment' ? '인증샷' : '사연'}} <i
+      currentTab === 'comment' ? '방문 기록' : '사연'}} <i
         class="icon ion-android-arrow-dropdown"></i></h1>
   </ion-header-bar>
   <ion-content class="has-footer"
@@ -16,14 +16,14 @@
       </div>
       <div class="item item-divider"
            ng-show="!lock['/treasures/' + treasure.id + '/comments'] && comments.length === 0">
-        인증샷이 없습니다.
+        아직 방문 기록이 없습니다
       </div>
       <ion-item class="item comment-item item-text-wrap"
                 ng-repeat="comment in comments">
         <p class="comment-info">
           <icon height="16" src="img/icon/ic_found_o.png"></icon>
           {{ comment.username }} <span
-          class="commented-time">{{ comment.created | date: 'yyyy년 MM월 dd일' }}</span>
+          class="commented-time">{{ comment.created | date: 'yyyy년 MM월 dd일 hh:mm:ss' }}</span>
         </p>
 
         <h2>{{ comment.body }}</h2>
@@ -61,7 +61,7 @@
            ng-click="showStoryModal(story)">
         <h3>{{ story.title }}</h3>
         <p>{{ story.username }}
-          <small>| {{ story.created | date:'yyyy-mm-dd' }}</small>
+          <small>| {{ story.created | date: 'yyyy년 MM월 dd일 hh:mm:ss' }}</small>
         </p>
       </div>
     </div>
@@ -108,7 +108,7 @@
     <div class="list select-tab">
       <div class="item" ng-hide="currentTab === 'comment'"
            ng-click="selectTab('comment')">
-        인증샷
+        방문 기록
       </div>
       <div class="item" ng-show="currentTab === 'comment'"
            ng-click="selectTab('story')">
