@@ -10,6 +10,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   $scope.angleToSelectedTreasure = 0;
   $scope.currentZoomLevel = 16;
   $scope.exploringTreasure = null;
+  $scope.locationTreasureIdMap = {};
 
   var lineSymbol = {
     path: 'M 0,-2 0,0',
@@ -128,6 +129,10 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       return;
     }
 
+    if ($scope.exploringTreasure) {
+      return;
+    }
+
     var center = $scope.map.getCenter();
     var ne = $scope.map.getBounds().getNorthEast();
     var sw = $scope.map.getBounds().getSouthWest();
@@ -135,51 +140,54 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     where latitude between ? and ?
     and longitude between ? and ?
     `;
+
+    var loadTreasureCallback = function(treasureDataArray) {
+      $scope.currentTreasuresIdMap = {};
+      for (var td of treasureDataArray) {
+        var t:Treasure = new Treasure(td);
+        $scope.currentTreasuresIdMap[t.id] = true;
+        if (!$scope.treasuresMap[t.id]) {
+          $scope.treasuresMap[t.id] = t;
+          if (!$scope.searchMode) {
+            t.marker.setMap($scope.map);
+          }
+
+          // add marker event listener
+          (function (treasure) {
+            google.maps.event.addListener(treasure.marker, 'click', function () {
+              $scope.selectTreasure(treasure);
+              $scope.$digest();
+            });
+          })(t);
+
+        }
+        for (var tid in $scope.treasuresMap) {
+          if (!$scope.currentTreasuresIdMap[tid]) {
+            var marker = $scope.treasuresMap[tid].marker;
+            marker.setMap(null);
+            google.maps.event.clearInstanceListeners(marker);
+            delete $scope.treasuresMap[tid];
+          }
+        }
+      }
+    };
+
     //if (db.initialized && auth.isLogin()) {
     if (false) {
       db.select(where, [sw.lat(), ne.lat(), sw.lng(), ne.lng()])
-        .then(function (res) {
-
-
+        .then(function(res) {
+          var treasureDataArray = [];
           for (var i = 0; i < res.rows.length; i++) {
-            var t:Treasure = new Treasure(res.rows.item(i));
-            $scope.currentTreasuresIdMap[t.id] = true;
-            if (!$scope.treasuresMap[t.id]) {
-              $scope.treasuresMap[t.id] = t;
-              if (!$scope.searchMode) {
-                t.marker.setMap($scope.map);
-              }
-
-              // add marker event listener
-              (function (treasure) {
-                google.maps.event.addListener(treasure.marker, 'click', function () {
-                  $scope.selectTreasure(treasure);
-                  $scope.$digest();
-                });
-              })(t);
-
-            }
-            for (var tid in $scope.treasuresMap) {
-              if (!$scope.currentTreasuresIdMap[tid]) {
-                var marker = $scope.treasuresMap[tid].marker;
-                marker.setMap(null);
-                google.maps.event.clearInstanceListeners(marker);
-                delete $scope.treasuresMap[tid];
-              }
-            }
+            treasureDataArray.push(res.rows.item(i));
           }
+          loadTreasureCallback(treasureDataArray);
         });
-
     } else {
-
-
       var params = {
         latitude: center.lat(),
         longitude: center.lng(),
         distance: ne.lat() - center.lat()
       };
-
-
       var options = {
         url: '/treasures',
         method: 'get',
@@ -189,35 +197,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       };
 
       api.request(options, function (res, status) {
-        $scope.currentTreasuresIdMap = {};
-        for (var treasureData:ITreasureData of res.treasures) {
-          var t:Treasure = new Treasure(treasureData);
-          $scope.currentTreasuresIdMap[t.id] = true;
-          if (!$scope.treasuresMap[t.id]) {
-            $scope.treasuresMap[t.id] = t;
-            if (!$scope.searchMode) {
-              t.marker.setMap($scope.map);
-            }
-
-            // add marker event listener
-            (function (treasure) {
-              google.maps.event.addListener(treasure.marker, 'click', function () {
-                $scope.selectTreasure(treasure);
-                $scope.$digest();
-              });
-            })(t);
-
-          }
-          for (var tid in $scope.treasuresMap) {
-            if (!$scope.currentTreasuresIdMap[tid]) {
-              var marker = $scope.treasuresMap[tid].marker;
-              marker.setMap(null);
-              google.maps.event.clearInstanceListeners(marker);
-              delete $scope.treasuresMap[tid];
-            }
-          }
-        }
-
+        loadTreasureCallback(res.treasures);
       });
     }
   };
@@ -505,6 +485,10 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     for (var tid in $scope.treasuresMap) {
       $scope.treasuresMap[tid].marker.setMap(null);
     }
+
+    if ($scope.exploringTreasure) {
+      $scope.exploringTreasure.marker.setMap($scope.map);
+    }
   };
 
   $scope.showAllMarkers = function () {
@@ -551,12 +535,15 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       return;
     }
     $scope.exploringTreasure = $scope.selectedTreasure;
+    $scope.hideAllMarkers();
     $scope.refreshPath();
   };
 
   $scope.stopExplore = function () {
     $scope.exploringTreasure = null;
+    $scope.showAllMarkers();
     $scope.refreshPath();
+    $scope.getTreasures();
   };
 
   $scope.openExploredTreasuresModal = function () {
