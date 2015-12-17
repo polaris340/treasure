@@ -1142,6 +1142,27 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
             //$scope.$parent.selectedTreasure.explored = true;
             //$scope.$parent.selectedTreasure.setMarkerIcon(true);
         };
+        $scope.evaluateParams = {
+            score: 3,
+            difficulty: 5
+        };
+        $scope.submitEvaluate = function () {
+            console.log($scope.evaluateParams);
+        };
+        $scope.showEvaluateModal = function () {
+            modal.show('evaluate', 'templates/modals/evaluate.html', $scope);
+        };
+        $scope.editRequestParams = {
+            tid: $scope.treasure.id,
+            title: '',
+            body: ''
+        };
+        $scope.submitEditRequest = function () {
+            console.log($scope.editRequestParams);
+        };
+        $scope.showEditRequestModal = function () {
+            modal.show('editRequest', 'templates/modals/edit-request.html', $scope);
+        };
     }]);
 app.controller('TreasureListController', ['$scope', 'modal', function ($scope, modal) {
         $scope.hideModal = function () {

@@ -57,7 +57,7 @@
     </a>
 
     <a class="tab-item button-found" ng-class="{ explored: treasure.explored }"
-       ng-disabled="treasure.explored"
+       ng-hide="treasure.explored"
       ng-click="showExploreModal()"
       >
       <div class="button-found-background"></div>
@@ -67,6 +67,30 @@
                style="background-image:url('img/icon/ic_check.png');"></div>
         </i>
         찾기인증
+      </div>
+    </a>
+
+    <a class="tab-item"
+       ng-show="treasure.explored"
+       ng-click="showEvaluateModal()">
+      <div>
+        <i class="icon">
+          <div class="image"
+               style="background-image:url('img/icon/ic_star.png');"></div>
+        </i>
+        평점매기기
+      </div>
+    </a>
+
+    <a class="tab-item"
+       ng-show="treasure.explored"
+       ng-click="showEditRequestModal()">
+      <div>
+        <i class="icon">
+          <div class="image"
+               style="background-image:url('img/icon/ic_edit_request.png');"></div>
+        </i>
+        수정요청
       </div>
     </a>
 
