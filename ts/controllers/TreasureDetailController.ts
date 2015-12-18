@@ -42,7 +42,7 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
       return;
     }
 
-    modal.show('comment', 'templates/modals/comment.html', $scope);
+    modal.show('comment', 'templates/modals/comment.html', $scope, null, false);
   };
 
   $scope.showExploreModal = function () {
@@ -98,11 +98,23 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
   };
 
   $scope.evaluateParams = {
-    score: 3,
+    rating: 3,
     difficulty: 5
   };
   $scope.submitEvaluate = function() {
-    console.log($scope.evaluateParams);
+    api.request({
+      url: '/treasures/' + $scope.treasure.id + '/ratings',
+      method: 'post',
+      data: $scope.evaluateParams,
+      scope: $scope,
+      showLoading: true
+    }, function(res) {
+      message.show('평가되었습니다');
+      console.log(res);
+      $scope.treasure.difficulty = res.difficulty;
+      $scope.treasure.ratings = res.ratings;
+      modal.hide('evaluate');
+    });
   };
   $scope.showEvaluateModal = function() {
     modal.show('evaluate', 'templates/modals/evaluate.html', $scope);
@@ -111,12 +123,20 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
 
 
   $scope.editRequestParams = {
-    tid: $scope.treasure.id,
     title: '',
     body: ''
   };
   $scope.submitEditRequest = function() {
-    console.log($scope.editRequestParams);
+    api.request({
+      url: '/treasures/' + $scope.treasure.id + '/reports',
+      method: 'post',
+      data: $scope.editRequestParams,
+      scope: $scope,
+      showLoading: true
+    }, function(res) {
+      message.show('수정 요청 되었습니다.');
+      modal.hide('editRequest');
+    });
   };
   $scope.showEditRequestModal = function() {
     modal.show('editRequest', 'templates/modals/edit-request.html', $scope);

@@ -7,11 +7,11 @@
 
     <div class="headerbar-right-buttons">
       <span>
-        <icon height="16" src="img/icon/ic_waterdrop.png"></icon> 3
+        <icon height="16" src="img/icon/ic_waterdrop.png"></icon> {{ treasure.difficulty }}
       </span>
       &nbsp;&nbsp;
       <span>
-        <icon height="16" src="img/icon/ic_star.png"></icon> 0
+        <icon height="18" src="img/icon/ic_star.png"></icon> {{ treasure.ratings || '-' }}
       </span>
       <button class="button-clear" ng-click="lock['/treasures/' + treasure.id + '/like'] || likeToggle()">
         <icon height="24" src="img/icon/ic_heart.png" ng-show="!treasure.liked"></icon><icon height="24" src="img/icon/ic_heart_full.png" ng-hide="!treasure.liked"></icon> 찜하기

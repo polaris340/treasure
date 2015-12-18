@@ -1,4 +1,4 @@
-app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', function ($http, $rootScope, $state, $q, message, storage, modal) {
+app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading) {
   var self = this;
   this._authToken = storage.get('authToken', null);
   if (this._authToken) {
@@ -24,9 +24,11 @@ app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage',
     var canceler = $q.defer();
     targetScope.lock[lockUrl] = canceler;
 
+    if (options.showLoading) $ionicLoading.show();
     delete options.scope;
     $http(options)
       .then(function (response) {
+        if (options.showLoading) $ionicLoading.hide();
         var res = response.data || {};
         var status = response.status;
         if (typeof success === 'function') {
@@ -39,6 +41,7 @@ app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage',
         delete targetScope.lock[lockUrl];
 
       }, function (response) {
+        if (options.showLoading) $ionicLoading.hide();
         var res = response.data || {};
         var status = response.status;
         if (typeof error === 'function') {

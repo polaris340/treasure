@@ -1,6 +1,6 @@
 /// <reference path="../models/Comment.ts" />
 
-app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', 'api', 'modal', 'camera', 'message', function ($scope, $ionicLoading, $ionicPopup, api, modal, camera, message) {
+app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '$ionicPlatform', 'api', 'modal', 'camera', 'message', function ($scope, $ionicLoading, $ionicPopup, $ionicPlatform, api, modal, camera, message) {
   $scope.treasure = $scope.$parent.treasure;
   $scope.comments = [];
   $scope.newCommentData = {
@@ -188,13 +188,13 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
     }
   };
 
-  var deregisterHardBack = $ionicPlatform.registerBackButtonAction(function() {
+  var deregisterHardBack = $ionicPlatform.on('backbutton', function(e) {
     if ($scope.fullImageUrl) {
       $scope.fullImageUrl = '';
     } else {
       $scope.hideModal();
     }
-  }, 100);
+  }, false);
   $scope.$on('$destroy', function() {
     deregisterHardBack();
   });

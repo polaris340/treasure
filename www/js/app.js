@@ -58,6 +58,39 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         $ionicConfigProvider.scrolling.jsScrolling(false);
     }
 });
+var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
+app.directive('icon', function () {
+    return {
+        restrict: 'E',
+        replace: true,
+        scope: {},
+        template: iconTemplate,
+        controller: function ($scope, $element, $attrs) {
+            $scope.padding = parseInt($attrs.padding || 0);
+            $scope.width = parseInt($attrs.width || 0);
+            $scope.height = parseInt($attrs.height || 0);
+            $scope.width = $scope.width || $scope.height;
+            $scope.height = $scope.height || $scope.width;
+            $scope.src = $attrs.src;
+            if ($scope.padding) {
+                $scope.width -= $scope.padding * 2;
+                $scope.height -= $scope.padding * 2;
+            }
+        }
+    };
+});
+var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
+app.directive('snackbar', function () {
+    return {
+        restrict: 'E',
+        scope: {
+            message: '=',
+            buttonText: '=',
+            action: '&'
+        },
+        template: snackbarTemplate
+    };
+});
 var Comment = (function () {
     function Comment(data) {
         for (var key in data) {
@@ -67,7 +100,7 @@ var Comment = (function () {
     return Comment;
 })();
 /// <reference path="../models/Comment.ts" />
-app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', 'api', 'modal', 'camera', 'message', function ($scope, $ionicLoading, $ionicPopup, api, modal, camera, message) {
+app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '$ionicPlatform', 'api', 'modal', 'camera', 'message', function ($scope, $ionicLoading, $ionicPopup, $ionicPlatform, api, modal, camera, message) {
         $scope.treasure = $scope.$parent.treasure;
         $scope.comments = [];
         $scope.newCommentData = {
@@ -229,14 +262,14 @@ app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '
                 });
             }
         };
-        var deregisterHardBack = $ionicPlatform.registerBackButtonAction(function () {
+        var deregisterHardBack = $ionicPlatform.on('backbutton', function (e) {
             if ($scope.fullImageUrl) {
                 $scope.fullImageUrl = '';
             }
             else {
                 $scope.hideModal();
             }
-        }, 100);
+        }, false);
         $scope.$on('$destroy', function () {
             deregisterHardBack();
         });
@@ -1096,7 +1129,7 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
                 message.show('로그인이 필요합니다');
                 return;
             }
-            modal.show('comment', 'templates/modals/comment.html', $scope);
+            modal.show('comment', 'templates/modals/comment.html', $scope, null, false);
         };
         $scope.showExploreModal = function () {
             if (!auth.isLogin()) {
@@ -1143,22 +1176,42 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
             //$scope.$parent.selectedTreasure.setMarkerIcon(true);
         };
         $scope.evaluateParams = {
-            score: 3,
+            rating: 3,
             difficulty: 5
         };
         $scope.submitEvaluate = function () {
-            console.log($scope.evaluateParams);
+            api.request({
+                url: '/treasures/' + $scope.treasure.id + '/ratings',
+                method: 'post',
+                data: $scope.evaluateParams,
+                scope: $scope,
+                showLoading: true
+            }, function (res) {
+                message.show('평가되었습니다');
+                console.log(res);
+                $scope.treasure.difficulty = res.difficulty;
+                $scope.treasure.ratings = res.ratings;
+                modal.hide('evaluate');
+            });
         };
         $scope.showEvaluateModal = function () {
             modal.show('evaluate', 'templates/modals/evaluate.html', $scope);
         };
         $scope.editRequestParams = {
-            tid: $scope.treasure.id,
             title: '',
             body: ''
         };
         $scope.submitEditRequest = function () {
-            console.log($scope.editRequestParams);
+            api.request({
+                url: '/treasures/' + $scope.treasure.id + '/reports',
+                method: 'post',
+                data: $scope.editRequestParams,
+                scope: $scope,
+                showLoading: true
+            }, function (res) {
+                message.show('수정 요청 되었습니다.');
+                modal.hide('editRequest');
+            });
         };
         $scope.showEditRequestModal = function () {
             modal.show('editRequest', 'templates/modals/edit-request.html', $scope);
@@ -1199,40 +1252,7 @@ app.controller('WriteStoryController', function ($scope, $rootScope, api, $ionic
         });
     };
 });
-var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
-app.directive('icon', function () {
-    return {
-        restrict: 'E',
-        replace: true,
-        scope: {},
-        template: iconTemplate,
-        controller: function ($scope, $element, $attrs) {
-            $scope.padding = parseInt($attrs.padding || 0);
-            $scope.width = parseInt($attrs.width || 0);
-            $scope.height = parseInt($attrs.height || 0);
-            $scope.width = $scope.width || $scope.height;
-            $scope.height = $scope.height || $scope.width;
-            $scope.src = $attrs.src;
-            if ($scope.padding) {
-                $scope.width -= $scope.padding * 2;
-                $scope.height -= $scope.padding * 2;
-            }
-        }
-    };
-});
-var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
-app.directive('snackbar', function () {
-    return {
-        restrict: 'E',
-        scope: {
-            message: '=',
-            buttonText: '=',
-            action: '&'
-        },
-        template: snackbarTemplate
-    };
-});
-app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', function ($http, $rootScope, $state, $q, message, storage, modal) {
+app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading) {
         var self = this;
         this._authToken = storage.get('authToken', null);
         if (this._authToken) {
@@ -1255,9 +1275,13 @@ app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage',
             }
             var canceler = $q.defer();
             targetScope.lock[lockUrl] = canceler;
+            if (options.showLoading)
+                $ionicLoading.show();
             delete options.scope;
             $http(options)
                 .then(function (response) {
+                if (options.showLoading)
+                    $ionicLoading.hide();
                 var res = response.data || {};
                 var status = response.status;
                 if (typeof success === 'function') {
@@ -1268,6 +1292,8 @@ app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage',
                 }
                 delete targetScope.lock[lockUrl];
             }, function (response) {
+                if (options.showLoading)
+                    $ionicLoading.hide();
                 var res = response.data || {};
                 var status = response.status;
                 if (typeof error === 'function') {
@@ -1469,11 +1495,14 @@ app.service('message', ['ionicToast', function (ionicToast) {
 app.service('modal', ['$ionicModal', function ($ionicModal) {
         var self = this;
         this.modals = {};
-        this.show = function (name, url, scope, scopeValues, animation) {
+        this.show = function (name, url, scope, scopeValues, hardwareBackButtonClose, animation) {
+            if (typeof hardwareBackButtonClose === 'undefined')
+                hardwareBackButtonClose = true;
             animation = animation || 'slide-in-up';
             $ionicModal.fromTemplateUrl(url, {
                 scope: scope,
-                animation: animation
+                animation: animation,
+                hardwareBackButtonClose: hardwareBackButtonClose
             }).then(function (modal) {
                 if (scopeValues) {
                     for (var key in scopeValues) {
