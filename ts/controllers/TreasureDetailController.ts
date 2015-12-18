@@ -121,7 +121,6 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
   };
 
 
-
   $scope.editRequestParams = {
     title: '',
     body: ''
