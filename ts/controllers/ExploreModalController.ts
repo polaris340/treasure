@@ -27,6 +27,7 @@ app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$
       $rootScope.user.totalExplored++;
       $scope.message = '축하합니다! 보물을 찾았습니다.\n이 보물에 대한 난이도와 별점을 매겨 주세요.\n또한 이 보물을 찾은 소감을 사연댓글과\n인증샷으로 남겨 역사로 기록하세요.';
       $scope.hideModal(3000);
+      $scope.$emit('explored', $scope.treasure);
     }, function () {
       $ionicLoading.hide();
       $scope.exploreStatus = 'fail';

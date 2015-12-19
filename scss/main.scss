@@ -82,6 +82,12 @@ ion-modal-view {
 .main-header {
   padding-left: 8px;
   padding-right: 8px;
+
+  span.flex {
+    line-height: 33px;
+    font-size: 18px;
+    padding-left: 10px;
+  }
 }
 
 input {

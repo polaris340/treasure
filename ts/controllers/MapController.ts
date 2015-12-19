@@ -12,6 +12,18 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   $scope.exploringTreasure = null;
   $scope.locationTreasureMap = {};
   $scope.treasureListExpanded = false;
+  $scope.treasuresMap = {};
+  $scope.currentTreasuresIdMap = {};
+  $scope.selectedTreasure = null;
+
+  var initialize = function () {
+    $scope.exploringTreasure = null;
+    $scope.locationTreasureMap = {};
+    $scope.treasureListExpanded = false;
+    $scope.treasuresMap = {};
+    $scope.currentTreasuresIdMap = {};
+    $scope.selectedTreasure = null;
+  };
 
   var lineSymbol = {
     path: 'M 0,-2 0,0',
@@ -118,9 +130,8 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   });
 
   // 여기부터.
-  $scope.treasuresMap = {};
-  $scope.currentTreasuresIdMap = {};
-  $scope.selectedTreasure = null;
+
+
   //$scope.infoWindow = new google.maps.InfoWindow({
   //  content: ''
   //});
@@ -134,6 +145,10 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       return;
     }
 
+    if ($scope.currentTour) {
+      return;
+    }
+
     var center = $scope.map.getCenter();
     var ne = $scope.map.getBounds().getNorthEast();
     var sw = $scope.map.getBounds().getSouthWest();
@@ -142,7 +157,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     and longitude between ? and ?
     `;
 
-    var loadTreasureCallback = function(treasureDataArray) {
+    var loadTreasureCallback = function (treasureDataArray) {
       $scope.currentTreasuresIdMap = {};
       $scope.locationTreasureMap = {};
       for (var td of treasureDataArray) {
@@ -181,7 +196,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     //if (db.initialized && auth.isLogin()) {
     if (false) {
       db.select(where, [sw.lat(), ne.lat(), sw.lng(), ne.lng()])
-        .then(function(res) {
+        .then(function (res) {
           var treasureDataArray = [];
           for (var i = 0; i < res.rows.length; i++) {
             treasureDataArray.push(res.rows.item(i));
@@ -604,8 +619,76 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     });
   };
 
-  $scope.toggleTreasureListExpand = function() {
+  $scope.toggleTreasureListExpand = function () {
     $scope.treasureListExpanded = !$scope.treasureListExpanded;
+  };
+
+
+  /// tour
+  $scope.currentTour = null;
+  $scope.showTourTreasures = false;
+  $scope.showTourTreasureList = function () {
+    $scope.showTourTreasures = !$scope.showTourTreasures;
+  };
+
+  $scope.showTourListModal = function () {
+    $scope.hideAllMarkers();
+    modal.show('tourList', 'templates/modals/tour-list.html', $scope);
+  };
+
+  $scope.startTour = function (tour) {
+    $scope.currentTour = tour;
+    $ionicSideMenuDelegate.toggleLeft(false);
+    $scope.hideAllMarkers();
+    initialize();
+    api.request({
+      url: '/treasures/tours/' + tour.id,
+      method: 'get',
+      scope: $scope,
+      showLoading: true
+    }, function (res) {
+      $scope.currentTour.treasures = [];
+      for (var td of res.treasures) {
+        var t = new Treasure(td);
+        $scope.currentTour.treasures.push(t);
+        t.marker.setMap($scope.map);
+      }
+      for (var t of $scope.currentTour.treasures) {
+        if (!t.explored) {
+          $scope.exploringTreasure = t;
+          $scope.selectTreasure(t);
+
+          // add marker event listener
+          (function (treasure) {
+            google.maps.event.addListener(treasure.marker, 'click', function () {
+              $scope.selectTreasure(treasure);
+              $scope.$digest();
+            });
+          })(t);
+          break;
+        }
+      }
+      if (!$scope.exploringTreasure) {
+        message.show('모든 보물을 찾았습니다');
+        $scope.endTour();
+      }
+    }, function () {
+      $scope.endTour();
+    });
+
+  };
+
+  $scope.endTour = function () {
+    if (!$scope.currentTour) return;
+
+    for (var t of $scope.currentTour.treasures) {
+      t.marker.setMap(null);
+      google.maps.event.clearInstanceListeners(t.marker);
+    }
+    $scope.currentTour = null;
+    $scope.selectTreasure(null);
+    $scope.stopExplore();
+    $scope.getTreasures();
   };
 
   // sync data from server
@@ -641,7 +724,26 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     $window.location.reload(true);
   });
 
+  $scope.$on('explored', function (e, t) {
+    t.explored = true;
+    $scope.exploringTreasure = null;
+    if ($scope.currentTour) {
+      $scope.$root.hideModal('explore');
+      $scope.$root.hideModal('treasureDetail');
+      for (var t of $scope.currentTour.treasures) {
+        if (!t.explored) {
+          $scope.exploringTreasure = t;
+          $scope.selectTreasure(t);
+          break;
+        }
+      }
+      if (!$scope.exploringTreasure) {
+        message.show('모든 보물을 찾았습니다');
+        $scope.endTour();
+      }
+    }
 
+  });
   /*
    if (db.initialized && auth.isLogin()) {
    syncData();

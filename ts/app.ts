@@ -1,5 +1,5 @@
 var CONSTANTS = {
-  API_URL: 'http://54.64.176.231:8080'
+  API_URL: 'http://54.238.215.26:8080'
 };
 
 var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])

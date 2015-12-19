@@ -45,6 +45,10 @@
             </div>
           </div>
         </div>
+        <div class="item has-chevron-right" ng-click="showTourListModal();">
+          <icon height="20" src="img/icon/ic_tour.png"></icon>
+          보물찾기 투어
+        </div>
         <div class="item item-divider">
           설정
         </div>
@@ -79,10 +83,13 @@
     <div class="bar bar-header bar-stable has-icon transparent main-header">
       <icon height="32" padding="4" src="img/icon/ic_user.png"
             ng-click="toggleLeft();"></icon>
-      <span class="flex"></span>
+      <span class="flex">{{ currentTour ? '보물찾기 여행' : ''}}</span>
+      <icon height="32" padding="4" src="img/icon/ic_tour.png"
+            ng-click="showTourTreasureList()"
+            ng-show="currentTour"></icon>
       <icon height="32" padding="4" src="img/icon/ic_search.png"
             ng-click="enterSearchMode()"
-            ng-hide="searchMode"></icon>
+            ng-hide="searchMode || currentTour"></icon>
     </div>
 
     <div class="bar bar-header item-input-inset search-box bar-clear"
@@ -159,7 +166,6 @@
 
         </div>
       </div>
-
     </div>
 
     <div class="btn-my-location" ng-show="currentPositionMarker"
@@ -174,7 +180,7 @@
 
     <button class="button btn-toggle-treasure-list"
             ng-class="{'expand' : treasureListExpanded}"
-            ng-show="locationTreasureMap[selectedTreasure.locationString].length > 1"
+            ng-show="locationTreasureMap[selectedTreasure.locationString].length > 1 && !exploringTreasure"
             ng-click="toggleTreasureListExpand()"><i
       class="icon ion-navicon"></i>
     </button>
@@ -187,6 +193,29 @@
           ng-click="treasure.id === selectedTreasure.id || selectTreasure(treasure);">
           <h2>{{ treasure.name }}</h2>
 
+          <p class="info">
+        <span
+          class="treasure-type">{{ treasure.type.split(' ')[0] }}</span>
+            &nbsp;&nbsp;
+            <icon height="18" src="img/icon/ic_found_o.png"></icon>
+            {{ treasure.totalExplored }}
+            &nbsp;&nbsp;
+            <icon height="18" src="img/icon/ic_heart_blue.png"></icon>
+            {{ treasure.totalLiked }}
+          </p>
+        </ion-item>
+      </div>
+    </div>
+
+
+    <div class="selected-treasure-list"
+         ng-class="{'expand' : showTourTreasures}">
+      <div class="list">
+        <ion-item
+          ng-class="{selected:treasure.id === selectedTreasure.id}"
+          ng-repeat="treasure in currentTour.treasures"
+          ng-click="treasure.id === selectedTreasure.id || selectTreasure(treasure);">
+          <h2>{{ treasure.name }}</h2>
           <p class="info">
         <span
           class="treasure-type">{{ treasure.type.split(' ')[0] }}</span>
