@@ -58,39 +58,6 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         $ionicConfigProvider.scrolling.jsScrolling(false);
     }
 });
-var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
-app.directive('icon', function () {
-    return {
-        restrict: 'E',
-        replace: true,
-        scope: {},
-        template: iconTemplate,
-        controller: function ($scope, $element, $attrs) {
-            $scope.padding = parseInt($attrs.padding || 0);
-            $scope.width = parseInt($attrs.width || 0);
-            $scope.height = parseInt($attrs.height || 0);
-            $scope.width = $scope.width || $scope.height;
-            $scope.height = $scope.height || $scope.width;
-            $scope.src = $attrs.src;
-            if ($scope.padding) {
-                $scope.width -= $scope.padding * 2;
-                $scope.height -= $scope.padding * 2;
-            }
-        }
-    };
-});
-var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
-app.directive('snackbar', function () {
-    return {
-        restrict: 'E',
-        scope: {
-            message: '=',
-            buttonText: '=',
-            action: '&'
-        },
-        template: snackbarTemplate
-    };
-});
 var Comment = (function () {
     function Comment(data) {
         for (var key in data) {
@@ -1125,10 +1092,6 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
             modal.hide('treasureDetail');
         };
         $scope.showCommentModal = function () {
-            if (!auth.isLogin()) {
-                message.show('로그인이 필요합니다');
-                return;
-            }
             modal.show('comment', 'templates/modals/comment.html', $scope, null, false);
         };
         $scope.showExploreModal = function () {
@@ -1144,6 +1107,10 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
             modal.show('explore', 'templates/modals/explore.html', $scope);
         };
         $scope.showQuizModal = function () {
+            if (!auth.isLogin()) {
+                message.show('로그인이 필요합니다');
+                return;
+            }
             if ($scope.treasure.totalQuizzes === 0) {
                 message.show('아직 등록된 퀴즈가 없습니다');
                 return;
@@ -1217,7 +1184,32 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
             modal.show('editRequest', 'templates/modals/edit-request.html', $scope);
         };
     }]);
-app.controller('TreasureListController', ['$scope', 'modal', function ($scope, modal) {
+app.controller('TreasureListController', ['$scope', 'modal', 'api', function ($scope, modal, api) {
+        //$scope.treasures = [];
+        $scope.editMode = false;
+        $scope.editModeToggle = function () {
+            $scope.editMode = !$scope.editMode;
+            if (!$scope.editMode) {
+                var liked = [];
+                for (var _i = 0, _a = $scope.treasures; _i < _a.length; _i++) {
+                    var t = _a[_i];
+                    liked.push(t.id);
+                }
+                api.request({
+                    url: '/treasures/liked/swap',
+                    method: 'post',
+                    scope: $scope,
+                    data: {
+                        liked: liked
+                    },
+                    showLoading: true
+                });
+            }
+        };
+        $scope.moveItem = function (item, fromIndex, toIndex) {
+            $scope.treasures.splice(fromIndex, 1);
+            $scope.treasures.splice(toIndex, 0, item);
+        };
         $scope.hideModal = function () {
             modal.hide('liked');
             modal.hide('explored');
@@ -1250,6 +1242,39 @@ app.controller('WriteStoryController', function ($scope, $rootScope, api, $ionic
         }, function (res) {
             $ionicLoading.hide();
         });
+    };
+});
+var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
+app.directive('icon', function () {
+    return {
+        restrict: 'E',
+        replace: true,
+        scope: {},
+        template: iconTemplate,
+        controller: function ($scope, $element, $attrs) {
+            $scope.padding = parseInt($attrs.padding || 0);
+            $scope.width = parseInt($attrs.width || 0);
+            $scope.height = parseInt($attrs.height || 0);
+            $scope.width = $scope.width || $scope.height;
+            $scope.height = $scope.height || $scope.width;
+            $scope.src = $attrs.src;
+            if ($scope.padding) {
+                $scope.width -= $scope.padding * 2;
+                $scope.height -= $scope.padding * 2;
+            }
+        }
+    };
+});
+var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
+app.directive('snackbar', function () {
+    return {
+        restrict: 'E',
+        scope: {
+            message: '=',
+            buttonText: '=',
+            action: '&'
+        },
+        template: snackbarTemplate
     };
 });
 app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading) {

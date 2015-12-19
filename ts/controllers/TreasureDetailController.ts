@@ -37,11 +37,6 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
   };
 
   $scope.showCommentModal = function () {
-    if (!auth.isLogin()) {
-      message.show('로그인이 필요합니다');
-      return;
-    }
-
     modal.show('comment', 'templates/modals/comment.html', $scope, null, false);
   };
 
@@ -61,6 +56,11 @@ app.controller('TreasureDetailController', ['$rootScope', '$scope', '$ionicPopup
   };
 
   $scope.showQuizModal = function () {
+    if (!auth.isLogin()) {
+      message.show('로그인이 필요합니다');
+      return;
+    }
+
     if ($scope.treasure.totalQuizzes === 0) {
       message.show('아직 등록된 퀴즈가 없습니다');
       return;

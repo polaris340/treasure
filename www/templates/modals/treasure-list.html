@@ -4,10 +4,11 @@
     <button class="button button-clear" ng-click="hideModal()"><i
       class="icon ion-ios-close-empty"></i></button>
     <h1 class="title">{{ title }}</h1>
+    <button class="button button-clear" ng-show="title === '찜한 보물'" ng-click="editModeToggle()">{{ editMode ? '완료' : '순서 변경'}}</button>
   </ion-header-bar>
   <ion-content class="has-footer">
-    <div class="list">
-      <div class="item" ng-repeat="treasure in treasures"
+    <ion-list show-reorder="editMode">
+      <ion-item ng-repeat="treasure in treasures"
            ng-click="$parent.selectTreasure(treasure, true); hideModal();">
         <h2>{{ treasure.name }}</h2>
 
@@ -25,8 +26,11 @@
         </span>
           <span ng-hide="title === '찜한 보물'"> {{ treasure.exploredTime | date: 'yyyy-MM-dd hh:mm:ss'}}</span>
         </p>
-      </div>
-    </div>
+        <ion-reorder-button class="ion-navicon"
+                            on-reorder="moveItem(treasure, $fromIndex, $toIndex)">
+        </ion-reorder-button>
+      </ion-item>
+    </ion-list>
 
   </ion-content>
 

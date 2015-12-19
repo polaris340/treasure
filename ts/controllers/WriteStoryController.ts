@@ -29,4 +29,5 @@ app.controller('WriteStoryController', function($scope, $rootScope, api, $ionicL
     });
   };
 
+
 });
