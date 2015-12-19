@@ -58,39 +58,6 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         $ionicConfigProvider.scrolling.jsScrolling(false);
     }
 });
-var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
-app.directive('icon', function () {
-    return {
-        restrict: 'E',
-        replace: true,
-        scope: {},
-        template: iconTemplate,
-        controller: function ($scope, $element, $attrs) {
-            $scope.padding = parseInt($attrs.padding || 0);
-            $scope.width = parseInt($attrs.width || 0);
-            $scope.height = parseInt($attrs.height || 0);
-            $scope.width = $scope.width || $scope.height;
-            $scope.height = $scope.height || $scope.width;
-            $scope.src = $attrs.src;
-            if ($scope.padding) {
-                $scope.width -= $scope.padding * 2;
-                $scope.height -= $scope.padding * 2;
-            }
-        }
-    };
-});
-var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
-app.directive('snackbar', function () {
-    return {
-        restrict: 'E',
-        scope: {
-            message: '=',
-            buttonText: '=',
-            action: '&'
-        },
-        template: snackbarTemplate
-    };
-});
 var Comment = (function () {
     function Comment(data) {
         for (var key in data) {
@@ -99,402 +66,6 @@ var Comment = (function () {
     }
     return Comment;
 })();
-/*
- address: "서울 중구 세종대로 40 (남대문로4가)"
- description: "description"
- era: "조선시대"
- explored: true
- id: 1
- imageUrl: "http://cfs6.tistory.com/upload_control/download.blog?fhandle=YmxvZzEwNjMwQGZzNi50aXN0b3J5LmNvbTovYXR0YWNoLzEvMTE5LmpwZw%3D%3D"
- latitude: 37.615320754935965
- longitude: 126.57203069585375
- name: "숭례문"
- qrcodeUrl: "http://m.cha.go.kr/korea/heritage/search/Culresult_Db_View.jsp?mc=NS_04_03_01&VdkVgwKey=11,00010000,11&flag=Y#content"
- type: "국보 제1호"
- */
-var Treasure = (function () {
-    function Treasure(treasureData) {
-        this.id = treasureData.id;
-        for (var key in treasureData) {
-            var val = treasureData[key];
-            if (val === 'true') {
-                val = true;
-            }
-            if (val === 'false') {
-                val = false;
-            }
-            this[key] = val;
-        }
-    }
-    Object.defineProperty(Treasure.prototype, "marker", {
-        get: function () {
-            if (!this._marker) {
-                //var icon = 'img/icon/ic_marker_default.png';
-                //if (this.explored) {
-                //  icon = 'img/icon/ic_marker_found.png';
-                //} else if (this.liked) {
-                //  icon = 'img/icon/ic_marker_liked.png';
-                //}
-                var latLng = new google.maps.LatLng(this.latitude, this.longitude);
-                this._marker = new google.maps.Marker({
-                    position: latLng,
-                    title: this.name
-                });
-                this.setMarkerIcon(false);
-            }
-            return this._marker;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Treasure.prototype, "locationString", {
-        get: function () {
-            return this.latitude + ',' + this.longitude;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Treasure.prototype.setMarkerIcon = function (selected) {
-        var icon = 'img/icon/ic_marker_';
-        if (selected)
-            icon += 'selected_';
-        var suffix = 'default';
-        if (this.explored)
-            suffix = 'found';
-        else if (this.liked)
-            suffix = 'liked';
-        icon += suffix + '.png';
-        this.marker.setIcon(icon);
-    };
-    Treasure.prototype.update = function (data) {
-        for (var key in data) {
-            this[key] = data[key];
-        }
-    };
-    Object.defineProperty(Treasure.prototype, "latitude", {
-        get: function () {
-            return this.mLatitude;
-        },
-        set: function (value) {
-            this.mLatitude = value;
-            //if (!this.mLatitude) {
-            //  this.mLatitude = value + ((Math.pow(this.id, 3) % 997 - 997) / 10000000);
-            //}
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(Treasure.prototype, "longitude", {
-        get: function () {
-            return this.mLongitude;
-        },
-        set: function (value) {
-            this.mLongitude = value;
-            //if (!this.mLongitude) {
-            //  this.mLongitude = value + ((Math.pow(this.id, 2) % 997 - 997) / 10000000);
-            //}
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return Treasure;
-})();
-app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading) {
-        var self = this;
-        this._authToken = storage.get('authToken', null);
-        if (this._authToken) {
-            $http.defaults.headers.common.Authorization = 'Bearer ' + this._authToken;
-        }
-        this.request = function (options, success, error, complete) {
-            var targetScope = options.scope || $rootScope;
-            var lockUrl = options.lockUrl || options.url;
-            options.url = CONSTANTS.API_URL + options.url;
-            if (typeof targetScope.lock === 'undefined') {
-                targetScope.lock = {};
-            }
-            if (targetScope.lock[lockUrl]) {
-                if (options.force) {
-                    targetScope.lock[lockUrl].resolve();
-                }
-                else {
-                    throw new Error('url endpoint locked');
-                }
-            }
-            var canceler = $q.defer();
-            targetScope.lock[lockUrl] = canceler;
-            if (options.showLoading)
-                $ionicLoading.show();
-            delete options.scope;
-            $http(options)
-                .then(function (response) {
-                if (options.showLoading)
-                    $ionicLoading.hide();
-                var res = response.data || {};
-                var status = response.status;
-                if (typeof success === 'function') {
-                    success(res, status);
-                }
-                if (typeof complete === 'function') {
-                    complete(res, status);
-                }
-                delete targetScope.lock[lockUrl];
-            }, function (response) {
-                if (options.showLoading)
-                    $ionicLoading.hide();
-                var res = response.data || {};
-                var status = response.status;
-                if (typeof error === 'function') {
-                    error(res, status);
-                }
-                if (typeof complete === 'function') {
-                    complete(res, status);
-                }
-                delete targetScope.lock[lockUrl];
-                self.defaultErrorHandler(res, status);
-            });
-        };
-        this.setAuthToken = function (token) {
-            self._authToken = token;
-            if (token === null) {
-                storage.remove('authToken');
-            }
-            else {
-                storage.set('authToken', self._authToken);
-                $http.defaults.headers.common.Authorization = 'Bearer ' + self._authToken;
-            }
-        };
-        this.defaultErrorHandler = function (res, status) {
-            var errorMessage = res.detail || '오류가 발생했습니다 잠시 후에 다시 시도해주세요';
-            message.show(errorMessage);
-            if (status === 401) {
-                message.show('로그인이 필요합니다');
-                self.setAuthToken(null);
-                $rootScope.showLoginModal();
-            }
-        };
-    }]);
-app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', 'modal', function ($rootScope, $state, $ionicPopup, api, storage, db, modal) {
-        var self = this;
-        $rootScope.user = storage.get('user', null);
-        this.setUser = function (user) {
-            $rootScope.user = user;
-            storage.set('user', user);
-        };
-        this.isLogin = function () {
-            return !!api._authToken;
-        };
-        this.requestUserData = function () {
-            if (!this.isLogin()) {
-                return;
-            }
-            var self = this;
-            api.request({
-                url: '/users/me',
-                method: 'get'
-            }, function (res) {
-                self.setUser(res.user);
-                api.setAuthToken(res.token);
-            });
-        };
-        this.logout = function () {
-            if (!self.isLogin())
-                return;
-            var confirmPopup = $ionicPopup.confirm({
-                title: '로그아웃',
-                template: '로그아웃 하시겠습니까?',
-                okText: '로그아웃',
-                cancelText: '취소'
-            });
-            confirmPopup.then(function (res) {
-                if (res) {
-                    self.setUser(null);
-                    api.setAuthToken(null);
-                    db.deleteAll();
-                }
-            });
-        };
-        $rootScope.logout = this.logout;
-        $rootScope.showLoginModal = function () {
-            modal.show('login', 'templates/login.html', $rootScope);
-        };
-    }]);
-app.service('camera', ['$q', function ($q) {
-        this.getPicture = function (options) {
-            var q = $q.defer();
-            if (navigator.camera) {
-                navigator.camera.getPicture(function (result) {
-                    // Do any magic you need
-                    q.resolve(result);
-                }, function (err) {
-                    q.reject(err);
-                }, options);
-            }
-            return q.promise;
-        };
-    }]);
-app.service('db', ['$rootScope', '$cordovaSQLite', '$q', function ($rootScope, $cordovaSQLite, $q) {
-        var self = this;
-        this.initialized = false;
-        this.columns = {
-            id: {
-                type: 'INTEGER',
-                primary: true
-            },
-            name: {
-                type: 'TEXT'
-            },
-            latitude: {
-                type: 'REAL'
-            },
-            longitude: {
-                type: 'REAL'
-            },
-            explored: {
-                type: 'INTEGER'
-            },
-            liked: {
-                type: 'INTEGER'
-            },
-            updated: {
-                type: 'TEXT'
-            },
-            created: {
-                type: 'TEXT'
-            }
-        };
-        this.initialize = function () {
-            self.db = $cordovaSQLite.openDB({ name: "treasure.db" });
-            $cordovaSQLite.execute(self.db, "\n    CREATE TABLE IF NOT EXISTS treasure (\n    id integer primary key,\n    name text,\n    latitude real,\n    longitude real,\n    explored integer,\n    liked integer,\n    updated text,\n    created text\n    );");
-            self.initialized = true;
-            $rootScope.$broadcast('db.initialized');
-        };
-        this.insert = function (obj) {
-            if (!self.initialized)
-                return;
-            var columnNames = [];
-            var values = [];
-            var params = [];
-            for (var c in self.columns) {
-                values.push('?');
-                columnNames.push(c);
-                params.push(obj[c]);
-            }
-            var query = "INSERT OR REPLACE INTO treasure (" + columnNames.join(',') + ') values (' + values.join(',') + ')';
-            return $cordovaSQLite.execute(self.db, query, params);
-        };
-        this.bulkInsert = function (targets) {
-            if (!self.initialized)
-                return;
-            var columnNames = [];
-            for (var c in self.columns) {
-                columnNames.push(c);
-            }
-            var promises = [];
-            while (targets.length > 0) {
-                var objs = targets.splice(0, 100);
-                var values = [];
-                var realValues = [];
-                for (var _i = 0; _i < objs.length; _i++) {
-                    var o = objs[_i];
-                    var v = [];
-                    for (var _a = 0; _a < columnNames.length; _a++) {
-                        var k = columnNames[_a];
-                        v.push('?');
-                        realValues.push(o[k]);
-                    }
-                    values.push('(' + v.join(',') + ')');
-                }
-                var query = "INSERT OR REPLACE INTO treasure (" + columnNames.join(',') + ') VALUES '
-                    + values.join(',');
-                promises.push($cordovaSQLite.execute(self.db, query, realValues));
-            }
-            return $q.all(promises);
-        };
-        this.select = function (where, params) {
-            if (!self.initialized)
-                return;
-            return $cordovaSQLite.execute(self.db, 'select * from treasure ' + where + ' limit 100', params);
-        };
-        this.deleteAll = function () {
-            if (!self.initialized)
-                return;
-            return $cordovaSQLite.execute(self.db, 'delete from treasure');
-        };
-    }]);
-app.service('distance', [function () {
-        this.toDisplayDistance = function (meters) {
-            var d = "";
-            if (meters > 1000) {
-                d += Math.round(meters / 1000) + "km";
-            }
-            else {
-                d += Math.round(meters % 1000) + "m";
-            }
-            return d;
-        };
-    }]);
-app.service('message', ['ionicToast', function (ionicToast) {
-        this.show = function (message, duration) {
-            duration = duration || 1500;
-            ionicToast.show(message, 'top', false, duration);
-        };
-    }]);
-app.service('modal', ['$ionicModal', function ($ionicModal) {
-        var self = this;
-        this.modals = {};
-        this.show = function (name, url, scope, scopeValues, hardwareBackButtonClose, animation) {
-            if (typeof hardwareBackButtonClose === 'undefined')
-                hardwareBackButtonClose = true;
-            animation = animation || 'slide-in-up';
-            $ionicModal.fromTemplateUrl(url, {
-                scope: scope,
-                animation: animation,
-                hardwareBackButtonClose: hardwareBackButtonClose
-            }).then(function (modal) {
-                if (scopeValues) {
-                    for (var key in scopeValues) {
-                        modal.scope[key] = scopeValues[key];
-                    }
-                }
-                self.modals[name] = modal;
-                modal.show();
-            });
-        };
-        this.hide = function (name) {
-            if (!self.modals[name]) {
-                return;
-            }
-            self.modals[name].hide();
-            self.modals[name].remove();
-            delete self.modals[name];
-        };
-        this.hideAll = function () {
-            for (var name in self.modals) {
-                self.hide(name);
-            }
-        };
-    }]);
-app.service('storage', [function () {
-        this.get = function (key, defaultValue) {
-            var data = window.localStorage.getItem(key);
-            if (!data) {
-                data = defaultValue;
-            }
-            else {
-                data = JSON.parse(data);
-            }
-            return data;
-        };
-        this.set = function (key, value) {
-            var data = JSON.stringify(value);
-            window.localStorage.setItem(key, data);
-        };
-        this.remove = function (key) {
-            var data = this.get(key);
-            window.localStorage.removeItem(key);
-            return data;
-        };
-    }]);
 /// <reference path="../models/Comment.ts" />
 app.controller('CommentController', ['$scope', '$ionicLoading', '$ionicPopup', '$ionicPlatform', 'api', 'modal', 'camera', 'message', function ($scope, $ionicLoading, $ionicPopup, $ionicPlatform, api, modal, camera, message) {
         $scope.treasure = $scope.$parent.treasure;
@@ -748,6 +319,106 @@ app.controller('LoginController', ['$scope', '$rootScope', '$ionicLoading', '$io
             modal.show('signup', 'templates/modals/signup.html', $scope);
         };
     }]);
+/*
+ address: "서울 중구 세종대로 40 (남대문로4가)"
+ description: "description"
+ era: "조선시대"
+ explored: true
+ id: 1
+ imageUrl: "http://cfs6.tistory.com/upload_control/download.blog?fhandle=YmxvZzEwNjMwQGZzNi50aXN0b3J5LmNvbTovYXR0YWNoLzEvMTE5LmpwZw%3D%3D"
+ latitude: 37.615320754935965
+ longitude: 126.57203069585375
+ name: "숭례문"
+ qrcodeUrl: "http://m.cha.go.kr/korea/heritage/search/Culresult_Db_View.jsp?mc=NS_04_03_01&VdkVgwKey=11,00010000,11&flag=Y#content"
+ type: "국보 제1호"
+ */
+var Treasure = (function () {
+    function Treasure(treasureData) {
+        this.id = treasureData.id;
+        for (var key in treasureData) {
+            var val = treasureData[key];
+            if (val === 'true') {
+                val = true;
+            }
+            if (val === 'false') {
+                val = false;
+            }
+            this[key] = val;
+        }
+    }
+    Object.defineProperty(Treasure.prototype, "marker", {
+        get: function () {
+            if (!this._marker) {
+                //var icon = 'img/icon/ic_marker_default.png';
+                //if (this.explored) {
+                //  icon = 'img/icon/ic_marker_found.png';
+                //} else if (this.liked) {
+                //  icon = 'img/icon/ic_marker_liked.png';
+                //}
+                var latLng = new google.maps.LatLng(this.latitude, this.longitude);
+                this._marker = new google.maps.Marker({
+                    position: latLng,
+                    title: this.name
+                });
+                this.setMarkerIcon(false);
+            }
+            return this._marker;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Treasure.prototype, "locationString", {
+        get: function () {
+            return this.latitude + ',' + this.longitude;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Treasure.prototype.setMarkerIcon = function (selected) {
+        var icon = 'img/icon/ic_marker_';
+        if (selected)
+            icon += 'selected_';
+        var suffix = 'default';
+        if (this.explored)
+            suffix = 'found';
+        else if (this.liked)
+            suffix = 'liked';
+        icon += suffix + '.png';
+        this.marker.setIcon(icon);
+    };
+    Treasure.prototype.update = function (data) {
+        for (var key in data) {
+            this[key] = data[key];
+        }
+    };
+    Object.defineProperty(Treasure.prototype, "latitude", {
+        get: function () {
+            return this.mLatitude;
+        },
+        set: function (value) {
+            this.mLatitude = value;
+            //if (!this.mLatitude) {
+            //  this.mLatitude = value + ((Math.pow(this.id, 3) % 997 - 997) / 10000000);
+            //}
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Treasure.prototype, "longitude", {
+        get: function () {
+            return this.mLongitude;
+        },
+        set: function (value) {
+            this.mLongitude = value;
+            //if (!this.mLongitude) {
+            //  this.mLongitude = value + ((Math.pow(this.id, 2) % 997 - 997) / 10000000);
+            //}
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return Treasure;
+})();
 /// <reference path="../models/Treasure.ts" />
 app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$state', '$q', '$timeout', '$window', '$http', '$ionicLoading', '$ionicSideMenuDelegate', 'modal', 'api', 'distance', 'db', 'storage', 'auth', 'message', '$ionicPlatform', '$ionicPopup', function ($scope, $rootScope, $ionicHistory, $state, $q, $timeout, $window, $http, $ionicLoading, $ionicSideMenuDelegate, modal, api, distance, db, storage, auth, message, $ionicPlatform, $ionicPopup) {
         $scope.searchHistory = storage.get('searchHistory') || [];
@@ -1012,6 +683,9 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
                 }, options);
             }
         }, false);
+        $scope.showSettingModal = function () {
+            modal.show('setting', 'templates/modals/setting.html', $scope);
+        };
         $scope.showTreasureDetailModal = function () {
             if ($scope.selectedTreasure === null) {
                 return;
@@ -1468,6 +1142,9 @@ app.controller('QuizController', ['$scope', '$rootScope', '$ionicSlideBoxDelegat
             });
         };
     }]);
+app.controller('SettingController', function ($scope, setting) {
+    $scope.setting = setting;
+});
 app.controller('SignupController', ['$scope', '$ionicLoading', 'message', 'auth', 'api', 'modal', function ($scope, $ionicLoading, message, auth, api, modal) {
         $scope.signupParams = {
             username: "",
@@ -1703,3 +1380,366 @@ app.controller('WriteStoryController', function ($scope, $rootScope, api, $ionic
         });
     };
 });
+var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
+app.directive('icon', function () {
+    return {
+        restrict: 'E',
+        replace: true,
+        scope: {},
+        template: iconTemplate,
+        controller: function ($scope, $element, $attrs) {
+            $scope.padding = parseInt($attrs.padding || 0);
+            $scope.width = parseInt($attrs.width || 0);
+            $scope.height = parseInt($attrs.height || 0);
+            $scope.width = $scope.width || $scope.height;
+            $scope.height = $scope.height || $scope.width;
+            $scope.src = $attrs.src;
+            if ($scope.padding) {
+                $scope.width -= $scope.padding * 2;
+                $scope.height -= $scope.padding * 2;
+            }
+        }
+    };
+});
+var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
+app.directive('snackbar', function () {
+    return {
+        restrict: 'E',
+        scope: {
+            message: '=',
+            buttonText: '=',
+            action: '&'
+        },
+        template: snackbarTemplate
+    };
+});
+app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', 'setting', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading, setting) {
+        var self = this;
+        if (setting.autoLogin) {
+            this._authToken = storage.get('authToken', null);
+        }
+        else {
+            this._authToken = null;
+        }
+        if (this._authToken) {
+            $http.defaults.headers.common.Authorization = 'Bearer ' + this._authToken;
+        }
+        this.request = function (options, success, error, complete) {
+            var targetScope = options.scope || $rootScope;
+            var lockUrl = options.lockUrl || options.url;
+            options.url = CONSTANTS.API_URL + options.url;
+            if (typeof targetScope.lock === 'undefined') {
+                targetScope.lock = {};
+            }
+            if (targetScope.lock[lockUrl]) {
+                if (options.force) {
+                    targetScope.lock[lockUrl].resolve();
+                }
+                else {
+                    throw new Error('url endpoint locked');
+                }
+            }
+            var canceler = $q.defer();
+            targetScope.lock[lockUrl] = canceler;
+            if (options.showLoading)
+                $ionicLoading.show();
+            delete options.scope;
+            $http(options)
+                .then(function (response) {
+                if (options.showLoading)
+                    $ionicLoading.hide();
+                var res = response.data || {};
+                var status = response.status;
+                if (typeof success === 'function') {
+                    success(res, status);
+                }
+                if (typeof complete === 'function') {
+                    complete(res, status);
+                }
+                delete targetScope.lock[lockUrl];
+            }, function (response) {
+                if (options.showLoading)
+                    $ionicLoading.hide();
+                var res = response.data || {};
+                var status = response.status;
+                if (typeof error === 'function') {
+                    error(res, status);
+                }
+                if (typeof complete === 'function') {
+                    complete(res, status);
+                }
+                delete targetScope.lock[lockUrl];
+                self.defaultErrorHandler(res, status);
+            });
+        };
+        this.setAuthToken = function (token) {
+            self._authToken = token;
+            if (token === null) {
+                storage.remove('authToken');
+            }
+            else {
+                storage.set('authToken', self._authToken);
+                $http.defaults.headers.common.Authorization = 'Bearer ' + self._authToken;
+            }
+        };
+        this.defaultErrorHandler = function (res, status) {
+            var errorMessage = res.detail || '오류가 발생했습니다 잠시 후에 다시 시도해주세요';
+            message.show(errorMessage);
+            if (status === 401) {
+                message.show('로그인이 필요합니다');
+                self.setAuthToken(null);
+                $rootScope.showLoginModal();
+            }
+        };
+    }]);
+app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', 'modal', 'setting', function ($rootScope, $state, $ionicPopup, api, storage, db, modal, setting) {
+        var self = this;
+        if (setting.autoLogin) {
+            $rootScope.user = storage.get('user', null);
+        }
+        else {
+            $rootScope.user = null;
+        }
+        this.setUser = function (user) {
+            $rootScope.user = user;
+            setting.autoLogin = true;
+            setting.save();
+            storage.set('user', user);
+        };
+        this.isLogin = function () {
+            return !!api._authToken;
+        };
+        this.requestUserData = function () {
+            if (!this.isLogin()) {
+                return;
+            }
+            var self = this;
+            api.request({
+                url: '/users/me',
+                method: 'get'
+            }, function (res) {
+                self.setUser(res.user);
+                api.setAuthToken(res.token);
+            });
+        };
+        this.logout = function () {
+            if (!self.isLogin())
+                return;
+            var confirmPopup = $ionicPopup.confirm({
+                title: '로그아웃',
+                template: '로그아웃 하시겠습니까?',
+                okText: '로그아웃',
+                cancelText: '취소'
+            });
+            confirmPopup.then(function (res) {
+                if (res) {
+                    self.setUser(null);
+                    api.setAuthToken(null);
+                    db.deleteAll();
+                }
+            });
+        };
+        $rootScope.logout = this.logout;
+        $rootScope.showLoginModal = function () {
+            modal.show('login', 'templates/login.html', $rootScope);
+        };
+    }]);
+app.service('camera', ['$q', function ($q) {
+        this.getPicture = function (options) {
+            var q = $q.defer();
+            if (navigator.camera) {
+                navigator.camera.getPicture(function (result) {
+                    // Do any magic you need
+                    q.resolve(result);
+                }, function (err) {
+                    q.reject(err);
+                }, options);
+            }
+            return q.promise;
+        };
+    }]);
+app.service('db', ['$rootScope', '$cordovaSQLite', '$q', function ($rootScope, $cordovaSQLite, $q) {
+        var self = this;
+        this.initialized = false;
+        this.columns = {
+            id: {
+                type: 'INTEGER',
+                primary: true
+            },
+            name: {
+                type: 'TEXT'
+            },
+            latitude: {
+                type: 'REAL'
+            },
+            longitude: {
+                type: 'REAL'
+            },
+            explored: {
+                type: 'INTEGER'
+            },
+            liked: {
+                type: 'INTEGER'
+            },
+            updated: {
+                type: 'TEXT'
+            },
+            created: {
+                type: 'TEXT'
+            }
+        };
+        this.initialize = function () {
+            self.db = $cordovaSQLite.openDB({ name: "treasure.db" });
+            $cordovaSQLite.execute(self.db, "\n    CREATE TABLE IF NOT EXISTS treasure (\n    id integer primary key,\n    name text,\n    latitude real,\n    longitude real,\n    explored integer,\n    liked integer,\n    updated text,\n    created text\n    );");
+            self.initialized = true;
+            $rootScope.$broadcast('db.initialized');
+        };
+        this.insert = function (obj) {
+            if (!self.initialized)
+                return;
+            var columnNames = [];
+            var values = [];
+            var params = [];
+            for (var c in self.columns) {
+                values.push('?');
+                columnNames.push(c);
+                params.push(obj[c]);
+            }
+            var query = "INSERT OR REPLACE INTO treasure (" + columnNames.join(',') + ') values (' + values.join(',') + ')';
+            return $cordovaSQLite.execute(self.db, query, params);
+        };
+        this.bulkInsert = function (targets) {
+            if (!self.initialized)
+                return;
+            var columnNames = [];
+            for (var c in self.columns) {
+                columnNames.push(c);
+            }
+            var promises = [];
+            while (targets.length > 0) {
+                var objs = targets.splice(0, 100);
+                var values = [];
+                var realValues = [];
+                for (var _i = 0; _i < objs.length; _i++) {
+                    var o = objs[_i];
+                    var v = [];
+                    for (var _a = 0; _a < columnNames.length; _a++) {
+                        var k = columnNames[_a];
+                        v.push('?');
+                        realValues.push(o[k]);
+                    }
+                    values.push('(' + v.join(',') + ')');
+                }
+                var query = "INSERT OR REPLACE INTO treasure (" + columnNames.join(',') + ') VALUES '
+                    + values.join(',');
+                promises.push($cordovaSQLite.execute(self.db, query, realValues));
+            }
+            return $q.all(promises);
+        };
+        this.select = function (where, params) {
+            if (!self.initialized)
+                return;
+            return $cordovaSQLite.execute(self.db, 'select * from treasure ' + where + ' limit 100', params);
+        };
+        this.deleteAll = function () {
+            if (!self.initialized)
+                return;
+            return $cordovaSQLite.execute(self.db, 'delete from treasure');
+        };
+    }]);
+app.service('distance', [function () {
+        this.toDisplayDistance = function (meters) {
+            var d = "";
+            if (meters > 1000) {
+                d += Math.round(meters / 1000) + "km";
+            }
+            else {
+                d += Math.round(meters % 1000) + "m";
+            }
+            return d;
+        };
+    }]);
+app.service('message', ['ionicToast', function (ionicToast) {
+        this.show = function (message, duration) {
+            duration = duration || 1500;
+            ionicToast.show(message, 'top', false, duration);
+        };
+    }]);
+app.service('modal', ['$ionicModal', function ($ionicModal) {
+        var self = this;
+        this.modals = {};
+        this.show = function (name, url, scope, scopeValues, hardwareBackButtonClose, animation) {
+            if (typeof hardwareBackButtonClose === 'undefined')
+                hardwareBackButtonClose = true;
+            animation = animation || 'slide-in-up';
+            $ionicModal.fromTemplateUrl(url, {
+                scope: scope,
+                animation: animation,
+                hardwareBackButtonClose: hardwareBackButtonClose
+            }).then(function (modal) {
+                if (scopeValues) {
+                    for (var key in scopeValues) {
+                        modal.scope[key] = scopeValues[key];
+                    }
+                }
+                self.modals[name] = modal;
+                modal.show();
+            });
+        };
+        this.hide = function (name) {
+            if (!self.modals[name]) {
+                return;
+            }
+            self.modals[name].hide();
+            self.modals[name].remove();
+            delete self.modals[name];
+        };
+        this.hideAll = function () {
+            for (var name in self.modals) {
+                self.hide(name);
+            }
+        };
+    }]);
+app.service('setting', function (storage) {
+    this.autoLogin = storage.get('settings/autoLogin', true);
+    this.push = storage.get('settings/push', true);
+    this.fontSize = storage.get('settings/fontSize', '3');
+    this.setAutoLogin = function (value) {
+        this.autoLogin = value;
+        storage.set('settings/autoLogin', value);
+    };
+    this.setPush = function (value) {
+        this.push = value;
+        storage.set('settings/push', value);
+    };
+    this.setFontSize = function (value) {
+        this.fontSize = value;
+        storage.set('settings/fontSize', value);
+    };
+    this.save = function () {
+        storage.set('settings/autoLogin', this.autoLogin);
+        storage.set('settings/push', this.push);
+        storage.set('settings/fontSize', this.fontSize);
+    };
+});
+app.service('storage', [function () {
+        this.get = function (key, defaultValue) {
+            var data = window.localStorage.getItem(key);
+            if (!data) {
+                data = defaultValue;
+            }
+            else {
+                data = JSON.parse(data);
+            }
+            return data;
+        };
+        this.set = function (key, value) {
+            var data = JSON.stringify(value);
+            window.localStorage.setItem(key, data);
+        };
+        this.remove = function (key) {
+            var data = this.get(key);
+            window.localStorage.removeItem(key);
+            return data;
+        };
+    }]);

@@ -1,9 +1,15 @@
-app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', 'modal', function ($rootScope, $state, $ionicPopup, api, storage, db, modal) {
+app.service('auth', ['$rootScope', '$state', '$ionicPopup', 'api', 'storage', 'db', 'modal', 'setting', function ($rootScope, $state, $ionicPopup, api, storage, db, modal, setting) {
   var self = this;
-  $rootScope.user = storage.get('user', null);
+  if (setting.autoLogin) {
+    $rootScope.user = storage.get('user', null);
+  } else {
+    $rootScope.user = null;
+  }
 
   this.setUser = function (user) {
     $rootScope.user = user;
+    setting.autoLogin = true;
+    setting.save();
     storage.set('user', user);
   };
 

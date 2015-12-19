@@ -1,6 +1,10 @@
-app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading) {
+app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', 'setting', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading, setting) {
   var self = this;
-  this._authToken = storage.get('authToken', null);
+  if (setting.autoLogin) {
+    this._authToken = storage.get('authToken', null);
+  } else {
+    this._authToken = null;
+  }
   if (this._authToken) {
     $http.defaults.headers.common.Authorization = 'Bearer ' + this._authToken;
   }

@@ -313,6 +313,9 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     }
   }, false);
 
+  $scope.showSettingModal = function () {
+    modal.show('setting', 'templates/modals/setting.html', $scope);
+  };
 
   $scope.showTreasureDetailModal = function () {
     if ($scope.selectedTreasure === null) {

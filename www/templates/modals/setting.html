@@ -1,0 +1,38 @@
+<ion-modal-view ng-controller="SettingController"
+                class="modal-setting">
+  <ion-header-bar>
+    <button class="button button-clear" ng-click="$root.hideModal('setting')"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">설정</h1>
+    <button class="button button-clear" ng-click="setting.save(); $root.hideModal('setting')">저장</button>
+  </ion-header-bar>
+  <ion-content>
+    <div class="list">
+      <div class="item item-toggle">
+        자동로그인
+        <label class="toggle toggle-positive">
+          <input type="checkbox" ng-model="setting.autoLogin">
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </div>
+      <div class="item item-toggle">
+        푸쉬 알림
+        <label class="toggle toggle-positive">
+          <input type="checkbox" ng-model="setting.push">
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </div>
+      <div class="item range range-positive">
+        <div>
+        본문 폰트크기 조절
+        </div>
+        <input type="range" min="1" max="5" ng-model="setting.fontSize">
+      </div>
+    </div>
+  </ion-content>
+
+</ion-modal-view>
