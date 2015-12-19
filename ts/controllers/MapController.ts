@@ -10,7 +10,8 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   $scope.angleToSelectedTreasure = 0;
   $scope.currentZoomLevel = 16;
   $scope.exploringTreasure = null;
-  $scope.locationTreasureIdMap = {};
+  $scope.locationTreasureMap = {};
+  $scope.treasureListExpanded = false;
 
   var lineSymbol = {
     path: 'M 0,-2 0,0',
@@ -143,9 +144,15 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
 
     var loadTreasureCallback = function(treasureDataArray) {
       $scope.currentTreasuresIdMap = {};
+      $scope.locationTreasureMap = {};
       for (var td of treasureDataArray) {
         var t:Treasure = new Treasure(td);
         $scope.currentTreasuresIdMap[t.id] = true;
+        if ($scope.locationTreasureMap[t.locationString]) {
+          $scope.locationTreasureMap[t.locationString].push(t);
+        } else {
+          $scope.locationTreasureMap[t.locationString] = [t];
+        }
         if (!$scope.treasuresMap[t.id]) {
           $scope.treasuresMap[t.id] = t;
           if (!$scope.searchMode) {
@@ -159,7 +166,6 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
               $scope.$digest();
             });
           })(t);
-
         }
         for (var tid in $scope.treasuresMap) {
           if (!$scope.currentTreasuresIdMap[tid]) {
@@ -229,6 +235,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
   };
 
   $scope.selectTreasure = function (treasure, panTo) {
+    $scope.treasureListExpanded = false;
     if ($scope.selectedTreasure) {
       $scope.selectedTreasure.setMarkerIcon(false);
       // $scope.infoWindow.close();
@@ -270,6 +277,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
 
     $scope.calculateDistance();
     $scope.refreshPath();
+
     try {
       $scope.$digest();
     } catch (e) {
@@ -596,6 +604,10 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     });
   };
 
+  $scope.toggleTreasureListExpand = function() {
+    $scope.treasureListExpanded = !$scope.treasureListExpanded;
+  };
+
   // sync data from server
   var syncData = function () {
     var lastUpdated = storage.get('lastUpdated');
@@ -623,6 +635,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       $ionicLoading.hide();
     });
   };
+
 
   $scope.$on('login.success', function () {
     $window.location.reload(true);

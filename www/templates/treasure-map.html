@@ -4,7 +4,7 @@
     <div class="bar bar-header bar-clear">
       <div class="title">{{ $root.user.username }}</div>
     </div>
-    <ion-content class="has-header">
+    <ion-content class="has-header" scroll="false">
       <div class="list">
         <div class="item item-divider">마이페이지</div>
         <div class="item">
@@ -12,7 +12,8 @@
             <div class="col text-center">
               <div class="user-info-item">
                 <icon height="28" padding="4"
-                      src="img/icon/ic_point.png"></icon> 내 포인트: {{ $root.user.currentPoints }}
+                      src="img/icon/ic_point.png"></icon>
+                내 포인트: {{ $root.user.currentPoints }}
               </div>
             </div>
           </div>
@@ -48,16 +49,19 @@
           설정
         </div>
         <div class="item has-chevron-right">
-          <icon height="20" src="img/icon/icon-notice.png"></icon> 공지사항
+          <icon height="20" src="img/icon/icon-notice.png"></icon>
+          공지사항
         </div>
         <div class="item has-chevron-right" ng-click="$root.showGuideModal()">
-          <icon height="20" src="img/icon/icon-info.png"></icon> 문화유산보물찾기 소개
+          <icon height="20" src="img/icon/icon-info.png"></icon>
+          문화유산보물찾기 소개
         </div>
         <div class="item item-divider"></div>
         <!--<div class="item">-->
-          <!--<icon height="20" src="img/icon/icon-version.png"></icon> 앱 버전 정보-->
+        <!--<icon height="20" src="img/icon/icon-version.png"></icon> 앱 버전 정보-->
         <!--</div>-->
-        <div class="item text-center" ng-click="$root.logout()" ng-show="$root.user">
+        <div class="item text-center" ng-click="$root.logout()"
+             ng-show="$root.user">
           로그아웃
         </div>
         <div class="item text-center" ng-click="$root.showLoginModal()"
@@ -95,9 +99,12 @@
         <i class="icon ion-ios-close-empty"></i>
       </button>
     </div>
-    <div class="list search-history" ng-show="searchMode && !searchParams.keyword && searchHistory.length > 0">
+    <div class="list search-history"
+         ng-show="searchMode && !searchParams.keyword && searchHistory.length > 0">
       <div class="item item-divider">최근 검색 기록</div>
-      <div class="item" ng-repeat="history in searchHistory" ng-click="searchParams.keyword = history">{{ history }}</div>
+      <div class="item" ng-repeat="history in searchHistory"
+           ng-click="searchParams.keyword = history">{{ history }}
+      </div>
     </div>
 
     <div id="map" data-tap-disabled="true"></div>
@@ -122,7 +129,7 @@
       </div>
 
       <div class="right-button-wrap"
-           >
+      >
         <!--ng-show="selectedTreasure && currentPositionMarker"-->
         <div class="icon-found-wrap" ng-show="selectedTreasure.explored">
           <icon src="img/icon/ic_found.png" height="40"></icon>
@@ -165,13 +172,42 @@
       message="'지도를 확대해주세요'"
     ></snackbar>
 
+    <button class="button btn-toggle-treasure-list"
+            ng-class="{'expand' : treasureListExpanded}"
+            ng-show="locationTreasureMap[selectedTreasure.locationString].length > 1"
+            ng-click="toggleTreasureListExpand()"><i
+      class="icon ion-navicon"></i>
+    </button>
+    <div class="selected-treasure-list"
+         ng-class="{'expand' : treasureListExpanded}">
+      <div class="list">
+        <ion-item
+          ng-class="{selected:treasure.id === selectedTreasure.id}"
+          ng-repeat="treasure in locationTreasureMap[selectedTreasure.locationString]"
+          ng-click="treasure.id === selectedTreasure.id || selectTreasure(treasure);">
+          <h2>{{ treasure.name }}</h2>
+
+          <p class="info">
+        <span
+          class="treasure-type">{{ treasure.type.split(' ')[0] }}</span>
+            &nbsp;&nbsp;
+            <icon height="18" src="img/icon/ic_found_o.png"></icon>
+            {{ treasure.totalExplored }}
+            &nbsp;&nbsp;
+            <icon height="18" src="img/icon/ic_heart_blue.png"></icon>
+            {{ treasure.totalLiked }}
+          </p>
+        </ion-item>
+      </div>
+    </div>
+
   </ion-side-menu-content>
 </ion-side-menus>
 
 
 <!--<div class="start-page" ng-class="{started: started}">-->
-  <!--<img src="img/start-page/border.png" alt="" class="border"-->
-       <!--ng-click="startApp()">-->
-  <!--<button class="btn-start"-->
-          <!--ng-click="startApp()">시작하기</button>-->
+<!--<img src="img/start-page/border.png" alt="" class="border"-->
+<!--ng-click="startApp()">-->
+<!--<button class="btn-start"-->
+<!--ng-click="startApp()">시작하기</button>-->
 <!--</div>-->

@@ -366,6 +366,13 @@ var Treasure = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Treasure.prototype, "locationString", {
+        get: function () {
+            return this.latitude + ',' + this.longitude;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Treasure.prototype.setMarkerIcon = function (selected) {
         var icon = 'img/icon/ic_marker_';
         if (selected)
@@ -388,9 +395,10 @@ var Treasure = (function () {
             return this.mLatitude;
         },
         set: function (value) {
-            if (!this.mLatitude) {
-                this.mLatitude = value + ((Math.pow(this.id, 3) % 997 - 997) / 10000000);
-            }
+            this.mLatitude = value;
+            //if (!this.mLatitude) {
+            //  this.mLatitude = value + ((Math.pow(this.id, 3) % 997 - 997) / 10000000);
+            //}
         },
         enumerable: true,
         configurable: true
@@ -400,9 +408,10 @@ var Treasure = (function () {
             return this.mLongitude;
         },
         set: function (value) {
-            if (!this.mLongitude) {
-                this.mLongitude = value + ((Math.pow(this.id, 2) % 997 - 997) / 10000000);
-            }
+            this.mLongitude = value;
+            //if (!this.mLongitude) {
+            //  this.mLongitude = value + ((Math.pow(this.id, 2) % 997 - 997) / 10000000);
+            //}
         },
         enumerable: true,
         configurable: true
@@ -419,7 +428,8 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
         $scope.angleToSelectedTreasure = 0;
         $scope.currentZoomLevel = 16;
         $scope.exploringTreasure = null;
-        $scope.locationTreasureIdMap = {};
+        $scope.locationTreasureMap = {};
+        $scope.treasureListExpanded = false;
         var lineSymbol = {
             path: 'M 0,-2 0,0',
             strokeOpacity: 1,
@@ -524,10 +534,17 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             var where = "\n    where latitude between ? and ?\n    and longitude between ? and ?\n    ";
             var loadTreasureCallback = function (treasureDataArray) {
                 $scope.currentTreasuresIdMap = {};
+                $scope.locationTreasureMap = {};
                 for (var _i = 0; _i < treasureDataArray.length; _i++) {
                     var td = treasureDataArray[_i];
                     var t = new Treasure(td);
                     $scope.currentTreasuresIdMap[t.id] = true;
+                    if ($scope.locationTreasureMap[t.locationString]) {
+                        $scope.locationTreasureMap[t.locationString].push(t);
+                    }
+                    else {
+                        $scope.locationTreasureMap[t.locationString] = [t];
+                    }
                     if (!$scope.treasuresMap[t.id]) {
                         $scope.treasuresMap[t.id] = t;
                         if (!$scope.searchMode) {
@@ -601,6 +618,7 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             $scope.lineToTarget.setPath(path);
         };
         $scope.selectTreasure = function (treasure, panTo) {
+            $scope.treasureListExpanded = false;
             if ($scope.selectedTreasure) {
                 $scope.selectedTreasure.setMarkerIcon(false);
             }
@@ -923,6 +941,9 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
             }, function (res) {
                 $ionicLoading.hide();
             });
+        };
+        $scope.toggleTreasureListExpand = function () {
+            $scope.treasureListExpanded = !$scope.treasureListExpanded;
         };
         // sync data from server
         var syncData = function () {

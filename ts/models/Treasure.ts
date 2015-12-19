@@ -88,6 +88,10 @@ class Treasure implements ITreasure {
     return this._marker;
   }
 
+  get locationString() {
+    return this.latitude + ',' + this.longitude;
+  }
+
 
   setMarkerIcon(selected:boolean):void {
     var icon = 'img/icon/ic_marker_';
@@ -106,9 +110,10 @@ class Treasure implements ITreasure {
   }
 
   set latitude(value: number) {
-    if (!this.mLatitude) {
-      this.mLatitude = value + ((Math.pow(this.id, 3) % 997 - 997) / 10000000);
-    }
+    this.mLatitude = value;
+    //if (!this.mLatitude) {
+    //  this.mLatitude = value + ((Math.pow(this.id, 3) % 997 - 997) / 10000000);
+    //}
   }
 
   get latitude() {
@@ -116,9 +121,10 @@ class Treasure implements ITreasure {
   }
 
   set longitude(value: number) {
-    if (!this.mLongitude) {
-      this.mLongitude = value + ((Math.pow(this.id, 2) % 997 - 997) / 10000000);
-    }
+    this.mLongitude = value;
+    //if (!this.mLongitude) {
+    //  this.mLongitude = value + ((Math.pow(this.id, 2) % 997 - 997) / 10000000);
+    //}
   }
 
   get longitude() {
