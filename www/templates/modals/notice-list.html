@@ -1,0 +1,19 @@
+<ion-modal-view ng-controller="NoticeListController"
+                class="modal-notice-list">
+  <ion-header-bar>
+    <button class="button button-clear"
+            ng-click="$root.hideModal('noticeList')"><i
+      class="icon ion-ios-close-empty"></i></button>
+    <h1 class="title">공지사항</h1>
+  </ion-header-bar>
+  <ion-content>
+    <div class="list">
+      <div class="item item-divider" ng-show="notices.length === 0">공지사항이 없습니다</div>
+      <div class="item item-text-wrap expandable" ng-repeat="notice in notices">
+        <h3 class="expandable-handle">{{ notice.title }} <br><small>{{ notice.created | date: 'yyyy-MM-dd hh:mm:ss'}} </small></h3>
+        <pre class="expandable-target">{{ notice.body }}</pre>
+      </div>
+    </div>
+  </ion-content>
+
+</ion-modal-view>

@@ -1,0 +1,6 @@
+.expandable {
+  .expandable-target {
+    overflow: hidden;
+    transition: height .3s ease;
+  }
+}

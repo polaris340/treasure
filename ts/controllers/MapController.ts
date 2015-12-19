@@ -313,6 +313,10 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
     }
   }, false);
 
+  $scope.showNoticeListModal = function() {
+    modal.show('noticeList', 'templates/modals/notice-list.html', $scope);
+  };
+
   $scope.showSettingModal = function () {
     modal.show('setting', 'templates/modals/setting.html', $scope);
   };
