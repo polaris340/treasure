@@ -9,7 +9,7 @@
   <ion-content>
     <div class="list">
       <div class="item item-divider" ng-show="notices.length === 0">공지사항이 없습니다</div>
-      <div class="item item-text-wrap expandable" ng-repeat="notice in notices">
+      <div class="item item-text-wrap expandable font-size" ng-repeat="notice in notices">
         <h3 class="expandable-handle">{{ notice.title }} <br><small>{{ notice.created | date: 'yyyy-MM-dd hh:mm:ss'}} </small></h3>
         <pre class="expandable-target">{{ notice.body }}</pre>
       </div>

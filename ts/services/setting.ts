@@ -1,4 +1,4 @@
-app.service('setting', function(storage) {
+app.service('setting', function($rootScope, storage) {
   this.autoLogin = storage.get('settings/autoLogin', true);
   this.push = storage.get('settings/push', true);
   this.fontSize = storage.get('settings/fontSize', '3');
@@ -23,5 +23,8 @@ app.service('setting', function(storage) {
     storage.set('settings/autoLogin', this.autoLogin);
     storage.set('settings/push', this.push);
     storage.set('settings/fontSize', this.fontSize);
+    $rootScope.fontSize = this.fontSize;
   };
+
+  $rootScope.fontSize = this.fontSize;
 });

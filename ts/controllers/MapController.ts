@@ -118,7 +118,9 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
       $scope.currentZoomLevel = $scope.map.getZoom();
       if ($scope.currentZoomLevel < $scope.MIN_ZOOM_LEVEL_FOR_MARKER) {
         $scope.hideAllMarkers();
-        $scope.selectTreasure(null);
+        if (!$scope.exploringTreasure) {
+          $scope.selectTreasure(null);
+        }
       }
     });
 

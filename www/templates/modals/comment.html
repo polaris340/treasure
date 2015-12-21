@@ -26,7 +26,7 @@
           class="commented-time">{{ comment.created | date: 'yyyy년 MM월 dd일 hh:mm:ss' }}</span>
         </p>
 
-        <h2>{{ comment.body }}</h2>
+        <h2 class="font-size">{{ comment.body }}</h2>
 
         <div class="image" ng-if="comment.thumbnailUrl"
              style="background-image: url('{{ comment.thumbnailUrl }}');"
@@ -59,7 +59,7 @@
       </div>
       <div class="item" ng-repeat="story in stories"
            ng-click="showStoryModal(story)">
-        <h3>{{ story.title }}</h3>
+        <h3 class="font-size">{{ story.title }}</h3>
         <p>{{ story.username }}
           <small>| {{ story.created | date: 'yyyy년 MM월 dd일 hh:mm:ss' }}</small>
         </p>

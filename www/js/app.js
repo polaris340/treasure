@@ -518,7 +518,9 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
                 $scope.currentZoomLevel = $scope.map.getZoom();
                 if ($scope.currentZoomLevel < $scope.MIN_ZOOM_LEVEL_FOR_MARKER) {
                     $scope.hideAllMarkers();
-                    $scope.selectTreasure(null);
+                    if (!$scope.exploringTreasure) {
+                        $scope.selectTreasure(null);
+                    }
                 }
             });
         });
@@ -1158,8 +1160,11 @@ app.controller('QuizController', ['$scope', '$rootScope', '$ionicSlideBoxDelegat
             });
         };
     }]);
-app.controller('SettingController', function ($scope, setting) {
+app.controller('SettingController', function ($scope, setting, message) {
     $scope.setting = setting;
+    $scope.save = function () {
+        message.show('저장되었습니다');
+    };
 });
 app.controller('SignupController', ['$scope', '$ionicLoading', 'message', 'auth', 'api', 'modal', function ($scope, $ionicLoading, message, auth, api, modal) {
         $scope.signupParams = {
@@ -1824,7 +1829,7 @@ app.service('modal', ['$ionicModal', function ($ionicModal) {
             }
         };
     }]);
-app.service('setting', function (storage) {
+app.service('setting', function ($rootScope, storage) {
     this.autoLogin = storage.get('settings/autoLogin', true);
     this.push = storage.get('settings/push', true);
     this.fontSize = storage.get('settings/fontSize', '3');
@@ -1844,7 +1849,9 @@ app.service('setting', function (storage) {
         storage.set('settings/autoLogin', this.autoLogin);
         storage.set('settings/push', this.push);
         storage.set('settings/fontSize', this.fontSize);
+        $rootScope.fontSize = this.fontSize;
     };
+    $rootScope.fontSize = this.fontSize;
 });
 app.service('storage', [function () {
         this.get = function (key, defaultValue) {
