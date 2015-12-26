@@ -58,6 +58,147 @@ var app = angular.module('Treasure', ['ionic', 'ionic-toast', 'ngCordova'])
         $ionicConfigProvider.scrolling.jsScrolling(false);
     }
 });
+var ExpandableDirective = (function () {
+    function ExpandableDirective($timeout, $ionicScrollDelegate) {
+        var _this = this;
+        this.$timeout = $timeout;
+        this.$ionicScrollDelegate = $ionicScrollDelegate;
+        this.restrict = 'C';
+        this.scope = {
+            onExpandStart: '&',
+            onCollapseStart: '&',
+            onExpandEnd: '&',
+            onCollapseEnd: '&'
+        };
+        this.link = function ($scope, $element, $attrs) {
+            var animationDuration = 300;
+            if (typeof $attrs['duration'] !== 'undefined') {
+                animationDuration = parseInt($attrs['duration']);
+            }
+            var self = _this;
+            var expandableHandle = $element[0].getElementsByClassName('expandable-handle');
+            if (expandableHandle.length === 0) {
+                throw new Error('.expandable has no .expandable-handle');
+            }
+            var expandableTargets = $element[0].getElementsByClassName('expandable-target');
+            if (expandableTargets.length !== 1) {
+                throw new Error('.expandable can have only one .expandable-target');
+            }
+            var expandableTarget = expandableTargets[0];
+            $scope.$$postDigest(function () {
+                // 정확한 계산 위해서 digest 후에 실행
+                // $timeout으로 하면 처음에 깜빡거려서 $$postDigest 사용
+                // http://blogs.microsoft.co.il/choroshin/2014/04/08/angularjs-postdigest-vs-timeout-when-dom-update-is-needed/
+                var targetHeight = expandableTarget.getBoundingClientRect().height;
+                if (!$element.hasClass('expanded')) {
+                    expandableTarget.style.height = '0';
+                }
+                else {
+                    expandableTarget.style.height = targetHeight + 'px';
+                }
+                expandableTarget.style.transitionDuration = (animationDuration / 1000) + 's';
+                var calculateHeight = function () {
+                    if ($element.hasClass('expanded')) {
+                        var transition = window.getComputedStyle(expandableTarget).transition;
+                        expandableTarget.style.transition = 'initial';
+                        expandableTarget.style.height = 'auto';
+                        self.$timeout(function () {
+                            targetHeight = expandableTarget.getBoundingClientRect().height;
+                            expandableTarget.style.height = targetHeight + 'px';
+                            expandableTarget.style.transition = transition;
+                            self.$ionicScrollDelegate.resize();
+                        }, 100, false); // 0으로 하면 사파리에서 작동 안해서 100으로 바꿈
+                    }
+                };
+                var expand = function () {
+                    if ($element.hasClass('expanded')) {
+                        return;
+                    }
+                    expandableTarget.style.height = targetHeight + 'px';
+                    $scope.onExpandStart();
+                    $element.addClass('expanded');
+                    self.$timeout(function () {
+                        // 애니메이션 끝나기 전에 다시 누를 수 있으니 체크
+                        if ($element.hasClass('expanded')) {
+                            $scope.onExpandEnd();
+                        }
+                        else {
+                            $scope.onCollapseEnd();
+                        }
+                        self.$ionicScrollDelegate.resize();
+                    }, animationDuration);
+                };
+                var collapse = function () {
+                    if (!$element.hasClass('expanded')) {
+                        return;
+                    }
+                    expandableTarget.style.height = '0';
+                    $scope.onCollapseStart();
+                    $element.removeClass('expanded');
+                    self.$timeout(function () {
+                        // 애니메이션 끝나기 전에 다시 누를 수 있으니 체크
+                        if ($element.hasClass('expanded')) {
+                            $scope.onExpandEnd();
+                        }
+                        else {
+                            $scope.onCollapseEnd();
+                        }
+                        self.$ionicScrollDelegate.resize();
+                    }, animationDuration);
+                };
+                angular.element(expandableHandle).on('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if ($element.hasClass('expanded')) {
+                        collapse();
+                    }
+                    else {
+                        expand();
+                    }
+                });
+                $scope.$on('expandable.update', calculateHeight);
+                $scope.$on('expandable.expand', expand);
+                $scope.$on('expandable.collapse', collapse);
+            });
+        };
+    }
+    return ExpandableDirective;
+})();
+app.directive('expandable', ['$timeout', '$ionicScrollDelegate',
+    function ($timeout, $ionicScrollDelegate) { return new ExpandableDirective($timeout, $ionicScrollDelegate); }]);
+var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
+app.directive('icon', function () {
+    return {
+        restrict: 'E',
+        replace: true,
+        scope: {},
+        template: iconTemplate,
+        controller: function ($scope, $element, $attrs) {
+            $scope.padding = parseInt($attrs.padding || 0);
+            $scope.width = parseInt($attrs.width || 0);
+            $scope.height = parseInt($attrs.height || 0);
+            $scope.width = $scope.width || $scope.height;
+            $scope.height = $scope.height || $scope.width;
+            $scope.src = $attrs.src;
+            if ($scope.padding) {
+                $scope.width -= $scope.padding * 2;
+                $scope.height -= $scope.padding * 2;
+            }
+        }
+    };
+});
+var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
+app.directive('snackbar', function () {
+    return {
+        restrict: 'E',
+        scope: {
+            message: '=',
+            buttonText: '=',
+            action: '&'
+        },
+        template: snackbarTemplate
+    };
+});
 var Comment = (function () {
     function Comment(data) {
         for (var key in data) {
@@ -250,9 +391,8 @@ app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$
             var currentPosition = $scope.$parent.$parent.currentPositionMarker.getPosition();
             var targetPosition = new google.maps.LatLng($scope.treasure.latitude, $scope.treasure.longitude);
             if (google.maps.geometry.spherical.computeDistanceBetween(currentPosition, targetPosition) > $scope.EXPLORE_DISTANCE) {
-                $scope.message = "'찾기 인증'은 보물에 30m 이내로 접근해야 가능합니다.";
+                $scope.message = "'\uCC3E\uAE30\uC778\uC99D'\uC740 \uBCF4\uBB3C\uC5D0 30m \uC774\uB0B4\uB85C \uC811\uADFC\uD558\uAC70\uB098\n\uC548\uB0B4\uD310 \uB4F1\uC5D0 \uC788\uB294 QR\uCF54\uB4DC\uB97C \uCC0D\uC5B4\uC57C \uAC00\uB2A5\uD569\uB2C8\uB2E4.";
                 $scope.exploreStatus = 'fail';
-                $scope.hideModal(3000);
                 return;
             }
             $ionicLoading.show();
@@ -284,6 +424,43 @@ app.controller('ExploreModalController', ['$scope', '$rootScope', '$timeout', '$
             $timeout(function () {
                 modal.hide('explore');
             }, delay);
+        };
+        $scope.readBarcode = function () {
+            if (window.cordova && window.cordova.plugins.barcodeScanner) {
+                window.cordova.plugins.barcodeScanner.scan(function (result) {
+                    if (!result.cancelled) {
+                        if (result.format == "QR_CODE") {
+                            var value = result.text;
+                            $ionicLoading.show();
+                            api.request({
+                                url: '/treasures/' + $scope.treasure.id + '/explored',
+                                method: 'post',
+                                scope: $scope,
+                                data: {
+                                    qr: value
+                                }
+                            }, function (response) {
+                                $ionicLoading.hide();
+                                console.log(response);
+                                $scope.exploreStatus = 'success';
+                                $scope.treasure.explored = true;
+                                $scope.treasure.setMarkerIcon(true);
+                                db.insert($scope.treasure);
+                                $rootScope.user.totalExplored++;
+                                $scope.message = '축하합니다! 보물을 찾았습니다.\n이 보물에 대한 난이도와 별점을 매겨 주세요.\n또한 이 보물을 찾은 소감을 사연댓글과\n인증샷으로 남겨 역사로 기록하세요.';
+                                $scope.hideModal(5000);
+                                $scope.$emit('explored', $scope.treasure);
+                            }, function () {
+                                $ionicLoading.hide();
+                                $scope.exploreStatus = 'fail';
+                                $scope.message = 'QR코드가 일치하지 않습니다.';
+                            });
+                        }
+                    }
+                }, function (error) {
+                    message.show('인증에 실패했습니다.');
+                });
+            }
         };
         $scope.explore();
     }]);
@@ -1399,147 +1576,6 @@ app.controller('WriteStoryController', function ($scope, $rootScope, api, $ionic
         }, function (res) {
             $ionicLoading.hide();
         });
-    };
-});
-var ExpandableDirective = (function () {
-    function ExpandableDirective($timeout, $ionicScrollDelegate) {
-        var _this = this;
-        this.$timeout = $timeout;
-        this.$ionicScrollDelegate = $ionicScrollDelegate;
-        this.restrict = 'C';
-        this.scope = {
-            onExpandStart: '&',
-            onCollapseStart: '&',
-            onExpandEnd: '&',
-            onCollapseEnd: '&'
-        };
-        this.link = function ($scope, $element, $attrs) {
-            var animationDuration = 300;
-            if (typeof $attrs['duration'] !== 'undefined') {
-                animationDuration = parseInt($attrs['duration']);
-            }
-            var self = _this;
-            var expandableHandle = $element[0].getElementsByClassName('expandable-handle');
-            if (expandableHandle.length === 0) {
-                throw new Error('.expandable has no .expandable-handle');
-            }
-            var expandableTargets = $element[0].getElementsByClassName('expandable-target');
-            if (expandableTargets.length !== 1) {
-                throw new Error('.expandable can have only one .expandable-target');
-            }
-            var expandableTarget = expandableTargets[0];
-            $scope.$$postDigest(function () {
-                // 정확한 계산 위해서 digest 후에 실행
-                // $timeout으로 하면 처음에 깜빡거려서 $$postDigest 사용
-                // http://blogs.microsoft.co.il/choroshin/2014/04/08/angularjs-postdigest-vs-timeout-when-dom-update-is-needed/
-                var targetHeight = expandableTarget.getBoundingClientRect().height;
-                if (!$element.hasClass('expanded')) {
-                    expandableTarget.style.height = '0';
-                }
-                else {
-                    expandableTarget.style.height = targetHeight + 'px';
-                }
-                expandableTarget.style.transitionDuration = (animationDuration / 1000) + 's';
-                var calculateHeight = function () {
-                    if ($element.hasClass('expanded')) {
-                        var transition = window.getComputedStyle(expandableTarget).transition;
-                        expandableTarget.style.transition = 'initial';
-                        expandableTarget.style.height = 'auto';
-                        self.$timeout(function () {
-                            targetHeight = expandableTarget.getBoundingClientRect().height;
-                            expandableTarget.style.height = targetHeight + 'px';
-                            expandableTarget.style.transition = transition;
-                            self.$ionicScrollDelegate.resize();
-                        }, 100, false); // 0으로 하면 사파리에서 작동 안해서 100으로 바꿈
-                    }
-                };
-                var expand = function () {
-                    if ($element.hasClass('expanded')) {
-                        return;
-                    }
-                    expandableTarget.style.height = targetHeight + 'px';
-                    $scope.onExpandStart();
-                    $element.addClass('expanded');
-                    self.$timeout(function () {
-                        // 애니메이션 끝나기 전에 다시 누를 수 있으니 체크
-                        if ($element.hasClass('expanded')) {
-                            $scope.onExpandEnd();
-                        }
-                        else {
-                            $scope.onCollapseEnd();
-                        }
-                        self.$ionicScrollDelegate.resize();
-                    }, animationDuration);
-                };
-                var collapse = function () {
-                    if (!$element.hasClass('expanded')) {
-                        return;
-                    }
-                    expandableTarget.style.height = '0';
-                    $scope.onCollapseStart();
-                    $element.removeClass('expanded');
-                    self.$timeout(function () {
-                        // 애니메이션 끝나기 전에 다시 누를 수 있으니 체크
-                        if ($element.hasClass('expanded')) {
-                            $scope.onExpandEnd();
-                        }
-                        else {
-                            $scope.onCollapseEnd();
-                        }
-                        self.$ionicScrollDelegate.resize();
-                    }, animationDuration);
-                };
-                angular.element(expandableHandle).on('click', function (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    if ($element.hasClass('expanded')) {
-                        collapse();
-                    }
-                    else {
-                        expand();
-                    }
-                });
-                $scope.$on('expandable.update', calculateHeight);
-                $scope.$on('expandable.expand', expand);
-                $scope.$on('expandable.collapse', collapse);
-            });
-        };
-    }
-    return ExpandableDirective;
-})();
-app.directive('expandable', ['$timeout', '$ionicScrollDelegate',
-    function ($timeout, $ionicScrollDelegate) { return new ExpandableDirective($timeout, $ionicScrollDelegate); }]);
-var iconTemplate = "\n<span class=\"icon-directive\"\nstyle=\"margin: {{padding}}px; width: {{width}}px; height: {{height}}px; background-image: url('{{src}}'); vertical-align: middle;\"\n></span>\n";
-app.directive('icon', function () {
-    return {
-        restrict: 'E',
-        replace: true,
-        scope: {},
-        template: iconTemplate,
-        controller: function ($scope, $element, $attrs) {
-            $scope.padding = parseInt($attrs.padding || 0);
-            $scope.width = parseInt($attrs.width || 0);
-            $scope.height = parseInt($attrs.height || 0);
-            $scope.width = $scope.width || $scope.height;
-            $scope.height = $scope.height || $scope.width;
-            $scope.src = $attrs.src;
-            if ($scope.padding) {
-                $scope.width -= $scope.padding * 2;
-                $scope.height -= $scope.padding * 2;
-            }
-        }
-    };
-});
-var snackbarTemplate = "\n  <div class=\"snackbar\">\n    <p>{{ message }}</p>\n  </div>\n";
-app.directive('snackbar', function () {
-    return {
-        restrict: 'E',
-        scope: {
-            message: '=',
-            buttonText: '=',
-            action: '&'
-        },
-        template: snackbarTemplate
     };
 });
 app.service('api', ['$http', '$rootScope', '$state', '$q', 'message', 'storage', 'modal', '$ionicLoading', 'setting', function ($http, $rootScope, $state, $q, message, storage, modal, $ionicLoading, setting) {

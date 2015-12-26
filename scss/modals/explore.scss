@@ -6,6 +6,8 @@
     width: 100%;
     margin-top: -100px;
     color: #aaa;
+    padding: 16px;
+
     ion-spinner {
       svg {
         width: 100px;
@@ -18,5 +20,6 @@
       line-height: 40px;
       font-size: 16px;
     }
+
   }
 }

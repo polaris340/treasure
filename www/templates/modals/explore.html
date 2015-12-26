@@ -7,9 +7,16 @@
   <ion-content scroll="false">
     <div class="center-box text-center">
       <ion-spinner ng-show="exploreStatus === 'waiting'"></ion-spinner>
-      <icon height="100" src="img/icon/ic_explore_success.png" ng-show="exploreStatus === 'success'"></icon>
-      <icon height="100" src="img/icon/ic_explore_fail.png" ng-show="exploreStatus === 'fail'"></icon>
+      <icon height="100" src="img/icon/ic_explore_success.png"
+            ng-show="exploreStatus === 'success'"></icon>
+      <icon height="100" src="img/icon/ic_explore_fail.png"
+            ng-show="exploreStatus === 'fail'"></icon>
       <pre class="message">{{ message }}</pre>
+
+      <button class="button button-positive button-block btn-qrcode"
+              ng-show="exploreStatus === 'fail'"
+              ng-click="readBarcode()">QR코드로 인증하기
+      </button>
     </div>
   </ion-content>
 </ion-modal-view>
