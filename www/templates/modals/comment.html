@@ -26,7 +26,7 @@
           class="commented-time">{{ comment.created | date: 'yyyy년 MM월 dd일 hh:mm:ss' }}</span>
         </p>
 
-        <h2 class="font-size">{{ comment.body }}</h2>
+        <pre class="font-size">{{ comment.body }}</pre>
 
         <div class="image" ng-if="comment.thumbnailUrl"
              style="background-image: url('{{ comment.thumbnailUrl }}');"
@@ -78,9 +78,9 @@
       <button class="btn-close" ng-click="commentImageUri = ''"><i
         class="icon ion-ios-close"></i></button>
     </div>
-    <form class="bar bar-footer item-input-inset" ng-submit="addComment()">
+    <form class="bar bar-footer item-input-inset comment-form" ng-submit="addComment()">
       <label class="item-input-wrapper">
-        <input type="text" placeholder="한마디" ng-model="newCommentData.body">
+        <textarea type="text" placeholder="문화유산과 더불어 당신의 방문기록도 소중한 역사의 일부가 됩니다" ng-model="newCommentData.body"></textarea>
       </label>
       <button class="button button-clear">
         등록

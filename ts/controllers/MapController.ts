@@ -382,14 +382,15 @@ app.controller('MapController', ['$scope', '$rootScope', '$ionicHistory', '$stat
 
   $scope.createCurrentPositionMarker = function () {
     $scope.arrowIcon = {
-      path: 'M 0,-17 L 11,11 L 0,0 L -11,11 L 0,-17',
+      //path: 'M 0,-17 L 11,11 L 0,0 L -11,11 L 0,-17',
+      path: google.maps.SymbolPath.CIRCLE,
       strokeColor: 'rgba(0, 0, 0, 0.2)',
       strokeOpacity: 1,
-      strokeWeight: 1,
+      strokeWeight: 6,
       fillColor: '#D83F2A',
       fillOpacity: 1,
       rotation: 0,
-      scale: 1.0
+      scale: 10.0
     };
 
     var arrowOptions = {

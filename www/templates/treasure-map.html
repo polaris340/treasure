@@ -174,7 +174,7 @@
 
     <div class="btn-my-location" ng-show="currentPositionMarker"
          ng-click="toCurrentLocation()">
-      <i class="icon ion-android-locate"></i>
+      <i class="icon ion-navigate" style="display: block; transition: transform .3s linear; transform: rotate({{ -45 + angleToSelectedTreasure }}deg);"></i>
     </div>
 
     <snackbar

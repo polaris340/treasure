@@ -1,7 +1,7 @@
 {
   "name": "ionic",
-  "version": "1.1.0",
-  "codename": "xenon-xerus",
+  "version": "1.2.4-nightly-2053",
+  "codename": "Copenhagen",
   "homepage": "https://github.com/driftyco/ionic",
   "authors": [
     "Max Lynch <max@drifty.com>",
@@ -34,13 +34,13 @@
     "angular-sanitize": "1.4.3",
     "angular-ui-router": "0.2.13"
   },
-  "_release": "1.1.0",
+  "_release": "1.2.4-nightly-2053",
   "_resolution": {
     "type": "version",
-    "tag": "v1.1.0",
-    "commit": "e3a8ca9d747335867c51a50f48e206dd16c5fbfd"
+    "tag": "v1.2.4-nightly-2053",
+    "commit": "f364244dc7de99d70630d1ce6f5501cdd2f23bfc"
   },
   "_source": "git://github.com/driftyco/ionic-bower.git",
-  "_target": "1.1.0",
+  "_target": "1.2.4-nightly-2053",
   "_originalSource": "driftyco/ionic-bower"
 }
